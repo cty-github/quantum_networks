@@ -26,6 +26,8 @@ public:
     double get_dst_p() const;
     double get_x_fidelity() const;
     double get_z_fidelity() const;
+    double get_bit_fidelity() const;
+    double get_fidelity() const;
 };
 
 class PhotonSource {

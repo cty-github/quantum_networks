@@ -41,6 +41,19 @@ void Routing::set_visit() {
     visit = true;
 }
 
+QNode* Routing::get_next_node(int node_id) const {
+    for (int i = 0; i < path.size(); i++) {
+        if (path[i]->get_id() == node_id) {
+            if (i+1 < path.size()) {
+                return path[i+1];
+            } else {
+                return nullptr;
+            }
+        }
+    }
+    return nullptr;
+}
+
 int Routing::get_next_node_id(int node_id) const {
     for (int i = 0; i < path.size(); i++) {
         if (path[i]->get_id() == node_id) {
@@ -68,11 +81,16 @@ void Routing::append_node(QNode* new_node, double new_cost) {
 }
 
 void Routing::print_routing() const {
-    cout << "cost: " << cost << " path:";
-    for (auto node:path) {
-        cout << " " << node->get_id();
+    cout << "Path: " ;
+    for (int i = 0; i < path.size(); i++) {
+        if (i == 0) {
+            cout << path[i]->get_id();
+        } else {
+            cout << " -> " << path[i]->get_id();
+        }
     }
     cout << endl;
+//    cout << "Fidelity: " << cost << endl;
 }
 
 void Routing::insert_routing(Routing* precede_route) {

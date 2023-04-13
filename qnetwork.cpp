@@ -14,6 +14,7 @@ QNetwork::QNetwork(int ptn_src_num, int bsm_num,
     cout << "Construct QNetwork with Args" << endl;
     device_manager = new DeviceManager(ptn_src_num, bsm_num, size, decay_rate, z_fidelity, x_fidelity);
     net_topology = new NetTopology(device_manager, user_num, repeater_num, size, alpha, beta);
+    link_mgr = new LinkManager(net_topology);
 }
 
 QNetwork::QNetwork(const string& net_topo_filepath) {
@@ -61,4 +62,12 @@ vector<Routing*> QNetwork::get_routings(int src_node_id, int dst_node_id, int k)
         return {};
     }
     return net_topology->get_routings(src_node_id, dst_node_id, k);
+}
+
+EntangleRoute* QNetwork::generate_etg_route(Routing* route) {
+    if (!link_mgr) {
+        cout << "No Link Manager" << endl;
+        return nullptr;
+    }
+    return link_mgr->connect_links(link_mgr->generate_links(route), route);
 }

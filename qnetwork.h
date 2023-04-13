@@ -7,11 +7,13 @@
 
 #include "net_topology/net_topology.h"
 #include "qdevice/device_manager.h"
+#include "net_manager/net_manager.h"
 
 class QNetwork {
 private:
     DeviceManager* device_manager{};
     NetTopology* net_topology{};
+    LinkManager* link_mgr{};
 public:
     QNetwork();
     QNetwork(int ptn_src_num, int bsm_num,
@@ -25,6 +27,7 @@ public:
     bool save_net_topo(const string& filepath) const;
     Routing* get_routing(int src_node_id, int dst_node_id);
     vector<Routing*> get_routings(int src_node_id, int dst_node_id, int k);
+    EntangleRoute* generate_etg_route(Routing* route);
 };
 
 #endif //QUANTUM_NETWORKS_QNETWORK_H

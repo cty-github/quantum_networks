@@ -24,6 +24,7 @@ public:
     void set_path(vector<QNode*>& new_path);
     bool get_visit() const;
     void set_visit();
+    QNode* get_next_node(int node_id) const;
     int get_next_node_id(int node_id) const;
     int get_start_node_id() const;
     int get_end_node_id() const;

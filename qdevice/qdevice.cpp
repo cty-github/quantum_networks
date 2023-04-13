@@ -41,6 +41,14 @@ double EntangleLink::get_z_fidelity() const {
     return z_fidelity;
 }
 
+double EntangleLink::get_bit_fidelity() const {
+    return src_p_flip * dst_p_flip + (1-src_p_flip) * (1-dst_p_flip);
+}
+
+double EntangleLink::get_fidelity() const {
+    return z_fidelity * (x_fidelity * get_bit_fidelity() + (1-x_fidelity) * (1-get_bit_fidelity()));
+}
+
 int PhotonSource::qubit_num = 0;
 
 PhotonSource::PhotonSource(int id, double pos_x, double pos_y, double decay_rate):
