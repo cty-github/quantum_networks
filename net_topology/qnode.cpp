@@ -4,10 +4,10 @@
 
 #include "qnode.h"
 
-QNode::QNode(int id, NodeType node_type, double pos_x, double pos_y,
-             int memory_size, double success_probability):
-        node_type(node_type), id(id), pos_x(pos_x), pos_y(pos_y),
-        memory_size(memory_size), memory_occupied(0), success_probability(success_probability) {}
+QNode::QNode(int id, NodeType node_type, double pos_x, double pos_y, int memory_size, BSM* bsm):
+node_type(node_type), id(id), pos_x(pos_x), pos_y(pos_y),
+memory_size(memory_size), memory_occupied(0),
+success_rate(bsm->get_z_fidelity()*bsm->get_x_fidelity()), bsm(bsm) {}
 
 QNode::QNode(const QNode& node) {
     node_type = node.node_type;
@@ -16,7 +16,8 @@ QNode::QNode(const QNode& node) {
     pos_y = node.pos_y;
     memory_size = node.memory_size;
     memory_occupied = node.memory_occupied;
-    success_probability = node.success_probability;
+    success_rate = node.success_rate;
+    bsm = node.bsm;
     adjacent_nodes_id = node.adjacent_nodes_id;
 }
 
@@ -55,8 +56,12 @@ bool QNode::occupy_memory(int n_qubit) {
     }
 }
 
-double QNode::get_success_probability() const {
-    return success_probability;
+double QNode::get_success_rate() const {
+    return success_rate;
+}
+
+BSM* QNode::get_bsm() const {
+    return bsm;
 }
 
 vector<int> QNode::get_adjacent_nodes_id() const {

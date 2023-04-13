@@ -3,11 +3,12 @@
 //
 
 #include "qedge.h"
-#include <cmath>
 
-QEdge::QEdge(int node_id_a, int node_id_b, int capacity, double distance, double decay_rate):
-        node_id_a(node_id_a), node_id_b(node_id_b), capacity(capacity), channel_occupied(0),
-        distance(distance), decay_rate(decay_rate), success_probability(exp(-decay_rate*distance)) {}
+QEdge::QEdge(int node_id_a, int node_id_b, int capacity, double distance, double success_rate, PhotonSource* ptn_src):
+node_id_a(node_id_a), node_id_b(node_id_b),
+capacity(capacity), channel_occupied(0),
+distance(distance), decay_rate(ptn_src->get_decay_rate()),
+success_rate(success_rate), ptn_src(ptn_src) {}
 
 QEdge::QEdge(const QEdge& edge) {
     node_id_a = edge.node_id_a;
@@ -16,7 +17,8 @@ QEdge::QEdge(const QEdge& edge) {
     channel_occupied = edge.channel_occupied;
     distance = edge.distance;
     decay_rate = edge.decay_rate;
-    success_probability = edge.success_probability;
+    success_rate = edge.success_rate;
+    ptn_src = edge.ptn_src;
 }
 
 QEdge::~QEdge() = default;
@@ -54,6 +56,10 @@ double QEdge::get_decay_rate() const {
     return decay_rate;
 }
 
-double QEdge::get_success_probability() const {
-    return success_probability;
+double QEdge::get_success_rate() const {
+    return success_rate;
+}
+
+PhotonSource* QEdge::get_ptn_src() const {
+    return ptn_src;
 }

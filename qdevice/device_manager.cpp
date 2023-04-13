@@ -35,6 +35,30 @@ int DeviceManager::get_bsm_num() const {
     return bsm_num;
 }
 
+map<int, PhotonSource*> DeviceManager::get_ptn_src_list() const {
+    return ptn_src_list;
+}
+
+map<int, BSM*> DeviceManager::get_bsm_list() const {
+    return bsm_list;
+}
+
+PhotonSource* DeviceManager::get_ptn_src(int id) const {
+    if (ptn_src_list.find(id) == ptn_src_list.end()) {
+        cout << "No Photon Source " << id << endl;
+        return nullptr;
+    }
+    return ptn_src_list.find(id)->second;
+}
+
+BSM* DeviceManager::get_bsm(int id) const {
+    if (bsm_list.find(id) == bsm_list.end()) {
+        cout << "No BSM " << id << endl;
+        return nullptr;
+    }
+    return bsm_list.find(id)->second;
+}
+
 bool DeviceManager::add_ptn_src(int id, double pos_x, double pos_y, double decay_rate) {
     if (ptn_src_list.find(id) != ptn_src_list.end()) {
         cout << "Exist Photon Source " << id << endl;

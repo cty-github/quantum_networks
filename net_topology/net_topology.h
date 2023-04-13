@@ -7,25 +7,12 @@
 
 #include "qnode.h"
 #include "qedge.h"
+#include "routing.h"
+#include "qdevice/device_manager.h"
 #include <string>
 #include <vector>
 #include <map>
-
-class Routing {
-private:
-    double cost;
-    vector<QNode*> path;
-    bool visit;
-public:
-    Routing(double cost, vector<QNode*>& path);
-    Routing(const Routing& routing);
-    double get_cost() const;
-    void set_cost(double new_cost);
-    vector<QNode*> get_path() const;
-    void set_path(vector<QNode*>& new_path);
-    bool get_visit() const;
-    void set_visit();
-};
+#include <set>
 
 class NetTopology {
 private:
@@ -35,22 +22,24 @@ private:
     map<int, map<int, QEdge*>> edges;
 public:
     NetTopology();
-    NetTopology(int user_num, int repeater_num, double size=10000, double alpha=0.5, double beta=0.9);
-    explicit NetTopology(const string& filepath);
+    NetTopology(DeviceManager* dev_mgr, int user_num, int repeater_num,
+                double size=10000, double alpha=0.5, double beta=0.9);
+    NetTopology(const string& filepath, DeviceManager* dev_mgr);
     ~NetTopology();
     int get_node_num() const;
     int get_edge_num() const;
-    bool add_node(int id, NodeType node_type=User, double pos_x=0.0, double pos_y=0.0,
-                  int memory_size=10, double success_probability=0.9);
+    bool add_node(int id, NodeType node_type, double pos_x, double pos_y, int memory_size, BSM* bsm);
     bool add_node(const QNode &node);
     double get_distance(int node_id_a, int node_id_b) const;
-    bool add_edge(int node_id_a, int node_id_b, int capacity=10,
-                  double distance=1200, double decay_rate=0.0002);
+    bool add_edge(int node_id_a, int node_id_b, int capacity,
+                  double distance, double success_rate, PhotonSource* ptn_src);
     bool add_edge(const QEdge &edge);
     QNode* get_node(int node_id);
     QEdge* get_edge(int node_id_a, int node_id_b);
     bool save_net(const string& filepath) const;
-    Routing* get_routing(int src_node_id, int dst_node_id);
+    Routing* get_routing(int src_node_id, int dst_node_id,
+                         const set<int>& closed_nodes={},
+                         const set<int>& closed_edge_nodes={});
     vector<Routing*> get_routings(int src_node_id, int dst_node_id, int k);
 };
 

@@ -7,14 +7,18 @@
 
 QNetwork::QNetwork() = default;
 
-QNetwork::QNetwork(int user_num, int repeater_num, double size, double alpha, double beta) {
+QNetwork::QNetwork(int ptn_src_num, int bsm_num,
+                   int user_num, int repeater_num,
+                   double size, double alpha, double beta,
+                   double decay_rate, double z_fidelity, double x_fidelity) {
     cout << "Construct QNetwork with Args" << endl;
-    net_topology = new NetTopology(user_num, repeater_num, size, alpha, beta);
+    device_manager = new DeviceManager(ptn_src_num, bsm_num, size, decay_rate, z_fidelity, x_fidelity);
+    net_topology = new NetTopology(device_manager, user_num, repeater_num, size, alpha, beta);
 }
 
 QNetwork::QNetwork(const string& net_topo_filepath) {
     cout << "Construct QNetwork with File " << net_topo_filepath << endl;
-    net_topology = new NetTopology(net_topo_filepath);
+    net_topology = new NetTopology(net_topo_filepath, device_manager);
 }
 
 QNetwork::~QNetwork() = default;
