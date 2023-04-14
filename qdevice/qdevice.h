@@ -11,22 +11,19 @@ class EntangleLink {
 private:
     int src_node_id;
     int dst_node_id;
-    double src_p_flip;
-    double dst_p_flip;
     double x_fidelity;
     double z_fidelity;
 public:
     EntangleLink(int src_node_id, int dst_node_id,
-                 double src_p_flip, double dst_p_flip,
-                 double x_fidelity=1, double z_fidelity=1);
+                 double src_bit_flip, double dst_bit_flip,
+                 double src_phase_flip, double dst_phase_flip);
+    EntangleLink(int src_node_id, int dst_node_id,
+                 double x_fidelity, double z_fidelity);
     ~EntangleLink();
     int get_src_id() const;
     int get_dst_id() const;
-    double get_src_p() const;
-    double get_dst_p() const;
     double get_x_fidelity() const;
     double get_z_fidelity() const;
-    double get_bit_fidelity() const;
     double get_fidelity() const;
 };
 

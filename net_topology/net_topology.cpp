@@ -42,7 +42,9 @@ node_num(0), edge_num(0) {
                 double ptn_y = ptn_src->get_pos_y();
                 double p_i = exp(-ptn_src->get_decay_rate()*dist(i_x, i_y, ptn_x, ptn_y));
                 double p_j = exp(-ptn_src->get_decay_rate()*dist(j_x, j_y, ptn_x, ptn_y));
-                double success_rate = p_i * p_j + (1-p_i) * (1-p_j);
+                double x_fidelity = p_i * p_j + (1-p_i) * (1-p_j);
+                double z_fidelity = p_i * p_j + (1-p_i) * (1-p_j);
+                double success_rate = x_fidelity * z_fidelity;
                 add_edge(i, j, rand_int(rand_eng),
                          get_distance(i, j), success_rate, ptn_src);
             }
@@ -98,7 +100,9 @@ NetTopology::NetTopology(const string& filepath, DeviceManager* dev_mgr): node_n
             double ptn_y = ptn_src->get_pos_y();
             double p_a = exp(-ptn_src->get_decay_rate()*dist(a_x, a_y, ptn_x, ptn_y));
             double p_b = exp(-ptn_src->get_decay_rate()*dist(b_x, b_y, ptn_x, ptn_y));
-            double success_rate = p_a * p_b + (1-p_a) * (1-p_b);
+            double x_fidelity = p_a * p_b + (1-p_a) * (1-p_b);
+            double z_fidelity = p_a * p_b + (1-p_a) * (1-p_b);
+            double success_rate = x_fidelity * z_fidelity;
             add_edge(node_id_a, node_id_b, capacity, get_distance(node_id_a, node_id_b), success_rate, ptn_src);
         } else {
             cout << "Error in File" << endl;
@@ -298,7 +302,9 @@ Routing* NetTopology::get_routing(int src_node_id, int dst_node_id,
                 continue;
             }
             double new_cost = Routing::combine_cost(
-                    current_cost,
+                    Routing::combine_cost(
+                            current_cost,
+                            get_node(current_node)->get_success_rate()),
                     get_edge(current_node, adj_node)->get_success_rate());
 //            cout << "new " << i << " " << new_cost << endl;
             vector<QNode*> new_path = src_route[current_node]->get_path();

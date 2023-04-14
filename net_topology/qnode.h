@@ -34,6 +34,7 @@ public:
     double get_pos_y() const;
     int get_memory_size() const;
     bool occupy_memory(int n_qubit);
+    bool release_memory(int n_qubit);
     double get_success_rate() const;
     BSM* get_bsm() const;
     vector<int> get_adjacent_nodes_id() const;

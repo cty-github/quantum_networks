@@ -19,7 +19,7 @@ void EntangleRoute::print_etg_link() const {
     cout << "Entangle Connection: Node " << etg_link->get_src_id() << " <-> Node " << etg_link->get_dst_id() << endl;
     cout << "X Fidelity: " << etg_link->get_x_fidelity() << endl;
     cout << "Z Fidelity: " << etg_link->get_z_fidelity() << endl;
-    cout << "Bit Fidelity: " << etg_link->get_bit_fidelity() << endl;
+    cout << "Total Fidelity: " << etg_link->get_fidelity() << endl;
 }
 
 Routing* EntangleRoute::get_route() const {
@@ -53,6 +53,8 @@ vector<EntangleLink*> LinkManager::generate_links(Routing* route) {
         double dist_a = dist(a_x, a_y, p_x, p_y);
         double dist_b = dist(b_x, b_y, p_x, p_y);
         etg_links.push_back(edge->get_ptn_src()->generate_link(node_id_a, node_id_b, dist_a, dist_b));
+        node->occupy_memory(1);
+        node_b->occupy_memory(1);
     }
     return etg_links;
 }
@@ -76,6 +78,7 @@ EntangleRoute* LinkManager::connect_links(const vector<EntangleLink*>& links, Ro
             delete old_etg_link;
             delete link;
             cout << " -> " << etg_link->get_fidelity();
+            net_topo->get_node(repeater_id)->release_memory(2);
         }
     }
     cout << endl;

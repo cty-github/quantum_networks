@@ -9,10 +9,15 @@
 using namespace std;
 
 EntangleLink::EntangleLink(int src_node_id, int dst_node_id,
-                           double src_p_flip, double dst_p_flip,
+                           double src_bit_flip, double dst_bit_flip,
+                           double src_phase_flip, double dst_phase_flip):
+src_node_id(src_node_id), dst_node_id(dst_node_id),
+x_fidelity(src_bit_flip*dst_bit_flip+(1-src_bit_flip)*(1-dst_bit_flip)),
+z_fidelity(src_phase_flip*dst_phase_flip+(1-src_phase_flip)*(1-dst_phase_flip)) {}
+
+EntangleLink::EntangleLink(int src_node_id, int dst_node_id,
                            double x_fidelity, double z_fidelity):
 src_node_id(src_node_id), dst_node_id(dst_node_id),
-src_p_flip(src_p_flip), dst_p_flip(dst_p_flip),
 x_fidelity(x_fidelity), z_fidelity(z_fidelity) {}
 
 EntangleLink::~EntangleLink() = default;
@@ -25,14 +30,6 @@ int EntangleLink::get_dst_id() const {
     return dst_node_id;
 }
 
-double EntangleLink::get_src_p() const {
-    return src_p_flip;
-}
-
-double EntangleLink::get_dst_p() const {
-    return dst_p_flip;
-}
-
 double EntangleLink::get_x_fidelity() const {
     return x_fidelity;
 }
@@ -41,12 +38,8 @@ double EntangleLink::get_z_fidelity() const {
     return z_fidelity;
 }
 
-double EntangleLink::get_bit_fidelity() const {
-    return src_p_flip * dst_p_flip + (1-src_p_flip) * (1-dst_p_flip);
-}
-
 double EntangleLink::get_fidelity() const {
-    return z_fidelity * (x_fidelity * get_bit_fidelity() + (1-x_fidelity) * (1-get_bit_fidelity()));
+    return z_fidelity * x_fidelity;
 }
 
 int PhotonSource::qubit_num = 0;
@@ -90,7 +83,9 @@ EntangleLink* PhotonSource::generate_link(int node_id_a, int node_id_b, double d
     qubit_num += 2;
     double p_a = exp(-decay_rate*dist_a);
     double p_b = exp(-decay_rate*dist_b);
-    return new EntangleLink(node_id_a, node_id_b, p_a, p_b);
+    return new EntangleLink(node_id_a, node_id_b,
+                            p_a, p_b,
+                            p_a, p_b);
 }
 
 //BellRes::BellRes(int pauli_z, int pauli_x): pauli_z(pauli_z), pauli_x(pauli_x) {}
@@ -144,25 +139,17 @@ EntangleLink* BSM::connect_link(EntangleLink* src_link, EntangleLink* dst_link) 
     }
     int new_src_id = src_link->get_src_id();
     int new_dst_id = dst_link->get_dst_id();
-    double new_src_p = src_link->get_src_p();
-    double new_dst_p = dst_link->get_dst_p();
-
-    double p_flip_z = src_link->get_dst_p();
-    double p_flip_x = dst_link->get_src_p();
     double src_x_f = src_link->get_x_fidelity();
     double src_z_f = src_link->get_z_fidelity();
     double dst_x_f = dst_link->get_x_fidelity();
     double dst_z_f = dst_link->get_z_fidelity();
 
-    double bit_fidelity = p_flip_z * p_flip_x + (1-p_flip_z) * (1-p_flip_x);
     double new_x_fidelity = src_x_f * dst_x_f + (1-src_x_f) * (1-dst_x_f);
     new_x_fidelity = new_x_fidelity * x_fidelity + (1-new_x_fidelity) * (1-x_fidelity);
-    new_x_fidelity = new_x_fidelity * bit_fidelity + (1-new_x_fidelity) * (1-bit_fidelity);
     double new_z_fidelity = src_z_f * dst_z_f + (1-src_z_f) * (1-dst_z_f);
     new_z_fidelity = new_z_fidelity * z_fidelity + (1-new_z_fidelity) * (1-z_fidelity);
 
     return new EntangleLink(new_src_id, new_dst_id,
-                            new_src_p, new_dst_p,
                             new_x_fidelity, new_z_fidelity);
 }
 

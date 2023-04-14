@@ -56,6 +56,15 @@ bool QNode::occupy_memory(int n_qubit) {
     }
 }
 
+bool QNode::release_memory(int n_qubit) {
+    if (memory_occupied >= n_qubit) {
+        memory_occupied -= n_qubit;
+        return true;
+    } else {
+        return false;
+    }
+}
+
 double QNode::get_success_rate() const {
     return success_rate;
 }
