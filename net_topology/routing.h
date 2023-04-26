@@ -9,19 +9,19 @@
 #include "qedge.h"
 #include <vector>
 
-class Routing {
+class Path {
 private:
     double cost;
-    vector<QNode*> path;
+    vector<QNode*> nodes;
     bool visit;
 public:
-    Routing(double cost, vector<QNode*>& path);
-    Routing(const Routing& routing);
+    Path(double cost, vector<QNode*>& nodes);
+    Path(const Path& path);
     double get_cost() const;
     void set_cost(double new_cost);
     static double combine_cost(double cost_a, double cost_b);
-    vector<QNode*> get_path() const;
-    void set_path(vector<QNode*>& new_path);
+    vector<QNode*> get_nodes() const;
+    void set_nodes(vector<QNode*>& new_nodes);
     bool get_visit() const;
     void set_visit();
     QNode* get_next_node(int node_id) const;
@@ -29,12 +29,12 @@ public:
     int get_start_node_id() const;
     int get_end_node_id() const;
     void append_node(QNode* new_node, double new_cost);
-    void print_routing() const;
-    void insert_routing(Routing* precede_route);
-    void append_routing(Routing* follow_route);
+    void print_path() const;
+    void insert_path(Path* precede_path);
+    void append_path(Path* follow_path);
 
-    struct cmp_routing{
-        bool operator() (pair<double, Routing*> r1, pair<double, Routing*> r2) {
+    struct cmp_path{
+        bool operator() (pair<double, Path*> r1, pair<double, Path*> r2) {
             return r1.first < r2.first; // high cost first
         }
     };

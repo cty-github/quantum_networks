@@ -5,6 +5,8 @@
 #include "device_manager.h"
 #include "utils/rand.h"
 #include "utils/tool.h"
+#include <sstream>
+#include <fstream>
 #include <iostream>
 
 DeviceManager::DeviceManager(): ptn_src_num(0), bsm_num(0) {}
@@ -15,14 +17,56 @@ DeviceManager::DeviceManager(int ptn_src_num, int bsm_num,
 ptn_src_num(0), bsm_num(0) {
     uniform_real_distribution<double> rand_double(0.0,1.0);
     for (int i = 0; i < ptn_src_num; i++) {
-        add_ptn_src(i, size*rand_double(rand_eng), size*rand_double(rand_eng), decay_rate);
+        add_ptn_src(i,
+                    size*rand_double(rand_eng),
+                    size*rand_double(rand_eng),
+                    decay_rate, 0.99);
     }
     for (int i = 0; i < bsm_num; i++) {
         add_bsm(i,
                 size*rand_double(rand_eng),
                 size*rand_double(rand_eng),
-                z_fidelity, x_fidelity);
+                z_fidelity, x_fidelity, 1.0);
     }
+}
+
+DeviceManager::DeviceManager(const string& filepath): ptn_src_num(0), bsm_num(0) {
+    ifstream file;
+    file.open(filepath,ios::in);
+    if (!file.is_open()) {
+        cout << "Cannot Open File " << filepath << endl;
+        return;
+    }
+    string line;
+    while (getline(file, line)) {
+        if (line.empty() || line[0] == '#') {
+            continue;
+        }
+        stringstream ss(line);
+        string key;
+        ss >> key;
+        if (key == "ptnsrc") {
+            int id;
+            double pos_x;
+            double pos_y;
+            double de_rate;
+            double fide;
+            ss >> id >> pos_x >> pos_y >> de_rate >> fide;
+            add_ptn_src(id, pos_x, pos_y, de_rate, fide);
+        } else if (key == "bsm") {
+            int id;
+            double pos_x;
+            double pos_y;
+            double z_fide;
+            double x_fide;
+            double suc_rate;
+            ss >> id >> pos_x >> pos_y >> z_fide >> x_fide >> suc_rate;
+            add_bsm(id, pos_x, pos_y, z_fide, x_fide, suc_rate);
+        } else {
+            cout << "Error in File" << endl;
+        }
+    }
+    file.close();
 }
 
 DeviceManager::~DeviceManager() = default;
@@ -59,25 +103,60 @@ BSM* DeviceManager::get_bsm(int id) const {
     return bsm_list.find(id)->second;
 }
 
-bool DeviceManager::add_ptn_src(int id, double pos_x, double pos_y, double decay_rate) {
+bool DeviceManager::add_ptn_src(int id, double pos_x, double pos_y, double decay_rate, double fidelity) {
     if (ptn_src_list.find(id) != ptn_src_list.end()) {
         cout << "Exist Photon Source " << id << endl;
         return false;
     }
-    auto* new_ptn_src = new PhotonSource(id, pos_x, pos_y, decay_rate);
+    auto* new_ptn_src = new PhotonSource(id, pos_x, pos_y, decay_rate, fidelity);
     ptn_src_list[id] = new_ptn_src;
     ptn_src_num++;
     return true;
 }
 
-bool DeviceManager::add_bsm(int id, double pos_x, double pos_y, double z_fidelity, double x_fidelity) {
+bool DeviceManager::add_bsm(int id, double pos_x, double pos_y,
+                            double z_fidelity, double x_fidelity, double success_rate) {
     if (bsm_list.find(id) != bsm_list.end()) {
         cout << "Exist BSM " << id << endl;
         return false;
     }
-    auto* new_bsm = new BSM(id, pos_x, pos_y, z_fidelity, x_fidelity);
+    auto* new_bsm = new BSM(id, pos_x, pos_y, z_fidelity, x_fidelity, success_rate);
     bsm_list[id] = new_bsm;
     bsm_num++;
+    return true;
+}
+
+bool DeviceManager::save_dev(const string& filepath) const {
+    ofstream file;
+    file.open(filepath,ios::out);
+    if (!file.is_open()) {
+        cout << "Cannot Open File " << filepath << endl;
+        return false;
+    }
+    file << "#\tid\tpos_x\tpos_y\tde_rate\tfide" << endl;
+    for (auto & it : ptn_src_list) {
+        PhotonSource* ptn_src = it.second;
+        file << "ptnsrc\t";
+        file << ptn_src->get_id() << '\t';
+        file << ptn_src->get_pos_x() << '\t';
+        file << ptn_src->get_pos_y() << '\t';
+        file << ptn_src->get_decay_rate() << '\t';
+        file << ptn_src->get_fidelity() << endl;
+    }
+    file << endl;
+    file << "#\tid\tpos_x\tpos_y\tz_fide\tx_fide\tsuc_rate" << endl;
+    for (auto & it : bsm_list) {
+        BSM* bsm = it.second;
+        file << "bsm\t";
+        file << bsm->get_id() << '\t';
+        file << bsm->get_pos_x() << '\t';
+        file << bsm->get_pos_y() << '\t';
+        file << bsm->get_z_fidelity() << '\t';
+        file << bsm->get_x_fidelity() << '\t';
+        file << bsm->get_success_rate() << endl;
+    }
+    file << endl;
+    file.close();
     return true;
 }
 

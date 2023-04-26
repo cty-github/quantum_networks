@@ -8,18 +8,19 @@
 #include "net_topology/net_topology.h"
 #include "net_topology/routing.h"
 #include "qdevice/qdevice.h"
+#include <utility>
 
 class EntangleRoute {
 private:
     EntangleLink* etg_link;
-    Routing* route;
+    Path* path;
     NetTopology* net_topo;
 public:
-    EntangleRoute(EntangleLink* etg_link, Routing* route, NetTopology* net_topo);
+    EntangleRoute(EntangleLink* etg_link, Path* path, NetTopology* net_topo);
     ~EntangleRoute();
     EntangleLink* get_etg_link() const;
     void print_etg_link() const;
-    Routing* get_route() const;
+    Path* get_path() const;
     NetTopology* get_net_topo() const;
 };
 
@@ -30,8 +31,16 @@ private:
 public:
     explicit LinkManager(NetTopology* net_topo);
     ~LinkManager();
-    vector<EntangleLink*> generate_links(Routing* route);
-    EntangleRoute* connect_links(const vector<EntangleLink*>& links, Routing* route);
+    vector<EntangleLink*> generate_links(Path* path);
+    EntangleRoute* connect_links(const vector<EntangleLink*>& links, Path* path);
+};
+
+class LinkProject {
+private:
+    vector<pair<int, int>> requests;
+public:
+    LinkProject();
+    ~LinkProject();
 };
 
 #endif //QUANTUM_NETWORKS_NET_MANAGER_H

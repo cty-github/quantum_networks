@@ -1,0 +1,11 @@
+#	s_id	d_id	fide_th
+request	2	0	0.960595
+request	7	0	0.978474
+request	4	1	0.951631
+request	1	5	0.952121
+request	5	2	0.980518
+request	2	8	0.972166
+request	2	9	0.965576
+request	7	5	0.982637
+request	6	9	0.98209
+

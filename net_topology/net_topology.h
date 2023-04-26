@@ -23,7 +23,7 @@ private:
 public:
     NetTopology();
     NetTopology(DeviceManager* dev_mgr, int user_num, int repeater_num,
-                double size=10000, double alpha=0.5, double beta=0.9);
+                double size, double alpha, double beta);
     NetTopology(const string& filepath, DeviceManager* dev_mgr);
     ~NetTopology();
     int get_node_num() const;
@@ -36,11 +36,11 @@ public:
     bool add_edge(const QEdge &edge);
     QNode* get_node(int node_id);
     QEdge* get_edge(int node_id_a, int node_id_b);
-    bool save_net(const string& filepath) const;
-    Routing* get_routing(int src_node_id, int dst_node_id,
-                         const set<int>& closed_nodes={},
-                         const set<int>& closed_edge_nodes={});
-    vector<Routing*> get_routings(int src_node_id, int dst_node_id, int k);
+    bool save_topo(const string& filepath) const;
+    Path* get_path(int src_node_id, int dst_node_id,
+                      const set<int>& closed_nodes={},
+                      const set<int>& closed_edge_nodes={});
+    vector<Path*> get_paths(int src_node_id, int dst_node_id, int k);
 };
 
 #endif //QUANTUM_NETWORKS_NET_TOPOLOGY_H

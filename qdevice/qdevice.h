@@ -33,16 +33,18 @@ private:
     double pos_x;
     double pos_y;
     double decay_rate;
+    double fidelity;
     static int qubit_num;
 public:
-    PhotonSource(int id, double pos_x, double pos_y, double decay_rate);
+    PhotonSource(int id, double pos_x, double pos_y, double decay_rate, double fidelity);
     ~PhotonSource();
     int get_id() const;
     double get_pos_x() const;
     double get_pos_y() const;
     double get_decay_rate() const;
+    double get_fidelity() const;
 //    QReg generate_pair(int node_id_a, int node_id_b, double dist_a, double dist_b) const;
-    EntangleLink* generate_link(int node_id_a, int node_id_b, double dist_a, double dist_b) const;
+    EntangleLink* try_generate_link(int node_id_a, int node_id_b, double dist_a, double dist_b) const;
 };
 
 //class BellRes {
@@ -64,28 +66,30 @@ private:
     double pos_y;
     double z_fidelity;
     double x_fidelity;
+    double success_rate;
 public:
-    BSM(int id, double pos_x, double pos_y, double fidelity);
-    BSM(int id, double pos_x, double pos_y, double z_fidelity, double x_fidelity);
+    BSM(int id, double pos_x, double pos_y, double fidelity, double success_rate);
+    BSM(int id, double pos_x, double pos_y, double z_fidelity, double x_fidelity, double success_rate);
     ~BSM();
     int get_id() const;
     double get_pos_x() const;
     double get_pos_y() const;
     double get_z_fidelity() const;
     double get_x_fidelity() const;
+    double get_success_rate() const;
 //    BellRes internal_measure(QReg* qreg, int node_id) const;
-    EntangleLink* connect_link(EntangleLink* src_link, EntangleLink* dst_link) const;
+    EntangleLink* try_connect_link(EntangleLink* src_link, EntangleLink* dst_link) const;
 };
 
 //class EntangleRoute {
 //private:
 //    QReg entangle_connect;
-//    Routing* route;
+//    Path* route;
 //    NetTopology* net_topo;
 //    PhotonSource* ptn_src;
 //    BSM* bsm;
 //public:
-//    EntangleRoute(Routing* route, NetTopology* net_topo, PhotonSource* ptn_src, BSM* bsm);
+//    EntangleRoute(Path* route, NetTopology* net_topo, PhotonSource* ptn_src, BSM* bsm);
 //    ~EntangleRoute();
 //    QReg* build_connect();
 //    bool test_connect();

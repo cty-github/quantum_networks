@@ -6,8 +6,8 @@
 #include "utils/tool.h"
 #include <iostream>
 
-EntangleRoute::EntangleRoute(EntangleLink* etg_link, Routing* route, NetTopology* net_topo):
-etg_link(etg_link), route(route), net_topo(net_topo) {}
+EntangleRoute::EntangleRoute(EntangleLink* etg_link, Path* path, NetTopology* net_topo):
+etg_link(etg_link), path(path), net_topo(net_topo) {}
 
 EntangleRoute::~EntangleRoute() = default;
 
@@ -22,8 +22,8 @@ void EntangleRoute::print_etg_link() const {
     cout << "Total Fidelity: " << etg_link->get_fidelity() << endl;
 }
 
-Routing* EntangleRoute::get_route() const {
-    return route;
+Path* EntangleRoute::get_path() const {
+    return path;
 }
 
 NetTopology* EntangleRoute::get_net_topo() const {
@@ -34,14 +34,14 @@ LinkManager::LinkManager(NetTopology* net_topo): net_topo(net_topo) {}
 
 LinkManager::~LinkManager() = default;
 
-vector<EntangleLink*> LinkManager::generate_links(Routing* route) {
+vector<EntangleLink*> LinkManager::generate_links(Path* path) {
     vector<EntangleLink*> etg_links = {};
-    for (auto node:route->get_path()) {
+    for (auto node:path->get_nodes()) {
         int node_id_a = node->get_id();
-        if (node_id_a == route->get_end_node_id()) {
+        if (node_id_a == path->get_end_node_id()) {
             continue;
         }
-        QNode* node_b = route->get_next_node(node_id_a);
+        QNode* node_b = path->get_next_node(node_id_a);
         int node_id_b = node_b->get_id();
         QEdge* edge = net_topo->get_edge(node_id_a, node_id_b);
         double a_x = node->get_pos_x();
@@ -52,14 +52,14 @@ vector<EntangleLink*> LinkManager::generate_links(Routing* route) {
         double p_y = edge->get_ptn_src()->get_pos_y();
         double dist_a = dist(a_x, a_y, p_x, p_y);
         double dist_b = dist(b_x, b_y, p_x, p_y);
-        etg_links.push_back(edge->get_ptn_src()->generate_link(node_id_a, node_id_b, dist_a, dist_b));
+        etg_links.push_back(edge->get_ptn_src()->try_generate_link(node_id_a, node_id_b, dist_a, dist_b));
         node->occupy_memory(1);
         node_b->occupy_memory(1);
     }
     return etg_links;
 }
 
-EntangleRoute* LinkManager::connect_links(const vector<EntangleLink*>& links, Routing* route) {
+EntangleRoute* LinkManager::connect_links(const vector<EntangleLink*>& links, Path* path) {
     cout << "Fidelity: ";
     EntangleLink* etg_link = nullptr;
     for (auto link:links) {
@@ -74,7 +74,7 @@ EntangleRoute* LinkManager::connect_links(const vector<EntangleLink*>& links, Ro
             }
             EntangleLink* old_etg_link = etg_link;
             BSM* bsm = net_topo->get_node(repeater_id)->get_bsm();
-            etg_link = bsm->connect_link(old_etg_link, link);
+            etg_link = bsm->try_connect_link(old_etg_link, link);
             delete old_etg_link;
             delete link;
             cout << " -> " << etg_link->get_fidelity();
@@ -82,5 +82,9 @@ EntangleRoute* LinkManager::connect_links(const vector<EntangleLink*>& links, Ro
         }
     }
     cout << endl;
-    return new EntangleRoute(etg_link, route, net_topo);
+    return new EntangleRoute(etg_link, path, net_topo);
 }
+
+LinkProject::LinkProject() = default;
+
+LinkProject::~LinkProject() = default;

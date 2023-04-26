@@ -3,6 +3,7 @@
 //
 
 #include "qdevice.h"
+#include "utils/rand.h"
 #include <cmath>
 #include <iostream>
 
@@ -44,8 +45,8 @@ double EntangleLink::get_fidelity() const {
 
 int PhotonSource::qubit_num = 0;
 
-PhotonSource::PhotonSource(int id, double pos_x, double pos_y, double decay_rate):
-id(id), pos_x(pos_x), pos_y(pos_y), decay_rate(decay_rate) {}
+PhotonSource::PhotonSource(int id, double pos_x, double pos_y, double decay_rate, double fidelity):
+id(id), pos_x(pos_x), pos_y(pos_y), decay_rate(decay_rate), fidelity(fidelity) {}
 
 PhotonSource::~PhotonSource() = default;
 
@@ -65,6 +66,10 @@ double PhotonSource::get_decay_rate() const {
     return decay_rate;
 }
 
+double PhotonSource::get_fidelity() const {
+    return fidelity;
+}
+
 //QReg PhotonSource::generate_pair(int node_id_a, int node_id_b, double dist_a, double dist_b) const {
 //    double p_a = exp(-decay_rate*dist_a);
 //    double p_b = exp(-decay_rate*dist_b);
@@ -79,24 +84,27 @@ double PhotonSource::get_decay_rate() const {
 //    return qreg;
 //}
 
-EntangleLink* PhotonSource::generate_link(int node_id_a, int node_id_b, double dist_a, double dist_b) const {
+EntangleLink* PhotonSource::try_generate_link(int node_id_a, int node_id_b, double dist_a, double dist_b) const {
     qubit_num += 2;
     double p_a = exp(-decay_rate*dist_a);
     double p_b = exp(-decay_rate*dist_b);
+    uniform_real_distribution<double> rand_double(0.0,1.0);
+    if (rand_double(rand_eng) > p_a * p_b) {
+        return nullptr;
+    }
     return new EntangleLink(node_id_a, node_id_b,
-                            p_a, p_b,
-                            p_a, p_b);
+                            fidelity, fidelity);
 }
 
 //BellRes::BellRes(int pauli_z, int pauli_x): pauli_z(pauli_z), pauli_x(pauli_x) {}
 //
 //BellRes::~BellRes() = default;
 
-BSM::BSM(int id, double pos_x, double pos_y, double fidelity):
-id(id), pos_x(pos_x), pos_y(pos_y), z_fidelity(fidelity), x_fidelity(fidelity) {}
+BSM::BSM(int id, double pos_x, double pos_y, double fidelity, double success_rate):
+id(id), pos_x(pos_x), pos_y(pos_y), z_fidelity(fidelity), x_fidelity(fidelity), success_rate(success_rate) {}
 
-BSM::BSM(int id, double pos_x, double pos_y, double z_fidelity, double x_fidelity):
-id(id), pos_x(pos_x), pos_y(pos_y), z_fidelity(z_fidelity), x_fidelity(x_fidelity) {}
+BSM::BSM(int id, double pos_x, double pos_y, double z_fidelity, double x_fidelity, double success_rate):
+id(id), pos_x(pos_x), pos_y(pos_y), z_fidelity(z_fidelity), x_fidelity(x_fidelity), success_rate(success_rate) {}
 
 BSM::~BSM() = default;
 
@@ -120,6 +128,10 @@ double BSM::get_x_fidelity() const {
     return x_fidelity;
 }
 
+double BSM::get_success_rate() const {
+    return success_rate;
+}
+
 //BellRes BSM::internal_measure(QReg* qreg, int node_id) const {
 //    int z_id = qreg->get_qubit(node_id, Z);
 //    int x_id = qreg->get_qubit(node_id, X);
@@ -132,7 +144,7 @@ double BSM::get_x_fidelity() const {
 //    return {qubit_z->get_value(), qubit_x->get_value()};
 //}
 
-EntangleLink* BSM::connect_link(EntangleLink* src_link, EntangleLink* dst_link) const {
+EntangleLink* BSM::try_connect_link(EntangleLink* src_link, EntangleLink* dst_link) const {
     if (src_link->get_dst_id() != dst_link->get_src_id()) {
         cout << "Error: Not the Same Repeater" << endl;
         return nullptr;
@@ -149,11 +161,15 @@ EntangleLink* BSM::connect_link(EntangleLink* src_link, EntangleLink* dst_link) 
     double new_z_fidelity = src_z_f * dst_z_f + (1-src_z_f) * (1-dst_z_f);
     new_z_fidelity = new_z_fidelity * z_fidelity + (1-new_z_fidelity) * (1-z_fidelity);
 
+    uniform_real_distribution<double> rand_double(0.0,1.0);
+    if (rand_double(rand_eng) > success_rate) {
+        return nullptr;
+    }
     return new EntangleLink(new_src_id, new_dst_id,
                             new_x_fidelity, new_z_fidelity);
 }
 
-//EntangleRoute::EntangleRoute(Routing* route, NetTopology* net_topo, PhotonSource* ptn_src, BSM* bsm):
+//EntangleRoute::EntangleRoute(Path* route, NetTopology* net_topo, PhotonSource* ptn_src, BSM* bsm):
 //        entangle_connect(), net_topo(net_topo), route(route), ptn_src(ptn_src), bsm(bsm) {}
 //
 //EntangleRoute::~EntangleRoute() = default;

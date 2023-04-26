@@ -6,6 +6,7 @@
 #define QUANTUM_NETWORKS_DEVICE_MANAGER_H
 
 #include "qdevice.h"
+#include <string>
 #include <map>
 
 using namespace std;
@@ -18,8 +19,9 @@ class DeviceManager {
 public:
     DeviceManager();
     DeviceManager(int ptn_src_num, int bsm_num,
-                  double size=10000, double decay_rate=0.0002,
-                  double z_fidelity=0.9, double x_fidelity=0.9);
+                  double size, double decay_rate,
+                  double z_fidelity, double x_fidelity);
+    explicit DeviceManager(const string& filepath);
     ~DeviceManager();
     int get_ptn_src_num() const;
     int get_bsm_num() const;
@@ -27,8 +29,9 @@ public:
     map<int, BSM*> get_bsm_list() const;
     PhotonSource* get_ptn_src(int id) const;
     BSM* get_bsm(int id) const;
-    bool add_ptn_src(int id, double pos_x, double pos_y, double decay_rate=0.0002);
-    bool add_bsm(int id, double pos_x, double pos_y, double z_fidelity=0.9, double x_fidelity=0.9);
+    bool add_ptn_src(int id, double pos_x, double pos_y, double decay_rate, double fidelity);
+    bool add_bsm(int id, double pos_x, double pos_y, double z_fidelity, double x_fidelity, double success_rate);
+    bool save_dev(const string& filepath) const;
     PhotonSource* get_closest_ptn_src(double x, double y);
     BSM* get_closest_bsm(double x, double y);
 };

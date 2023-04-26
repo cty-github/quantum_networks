@@ -223,14 +223,14 @@ QEdge* NetTopology::get_edge(int node_id_a, int node_id_b) {
     return edges[node_id_a][node_id_b];
 }
 
-bool NetTopology::save_net(const string& filepath) const {
+bool NetTopology::save_topo(const string& filepath) const {
     ofstream file;
     file.open(filepath,ios::out);
     if (!file.is_open()) {
         cout << "Cannot Open File " << filepath << endl;
         return false;
     }
-    cout << "Save QNetwork to File " << filepath << endl;
+    file << "#\ttype\tid\tpos_x\tpos_y\tn_mem\tsuc_prob" << endl;
     for (auto & it : nodes) {
         QNode* node = it.second;
         file << "node\t";
@@ -247,10 +247,12 @@ bool NetTopology::save_net(const string& filepath) const {
         file << node->get_memory_size() << '\t';
         file << node->get_success_rate() << endl;
     }
+    file << endl;
+    file << "#\tnode_A\tnode_B\tcap\tde_rate" << endl;
     for (auto & it_a : edges) {
         for (auto & it_b : it_a.second) {
             QEdge* edge = it_b.second;
-            if (edge->get_node_id_a() < edge->get_node_id_b()) {
+            if (it_a.first < it_b.first) {
                 file << "edge\t";
                 file << edge->get_node_id_a() << '\t';
                 file << edge->get_node_id_b() << '\t';
@@ -259,13 +261,14 @@ bool NetTopology::save_net(const string& filepath) const {
             }
         }
     }
+    file << endl;
     file.close();
     return true;
 }
 
-Routing* NetTopology::get_routing(int src_node_id, int dst_node_id,
-                                  const set<int>& closed_nodes,
-                                  const set<int>& closed_edge_nodes) {
+Path* NetTopology::get_path(int src_node_id, int dst_node_id,
+                            const set<int>& closed_nodes,
+                            const set<int>& closed_edge_nodes) {
     if (get_node(src_node_id) == nullptr) {
         cout << "No Src Node " << src_node_id << endl;
         return nullptr;
@@ -274,26 +277,27 @@ Routing* NetTopology::get_routing(int src_node_id, int dst_node_id,
         return nullptr;
     }
 
-    // get the shortest routing between src and dst with dijkstra algorithm
-    map<int, Routing*> src_route;
-    vector<QNode*> path_0 = {get_node(src_node_id)};
-    src_route[src_node_id] = new Routing(1, path_0);
+    // get the shortest path between src and dst with dijkstra algorithm
+    map<int, Path*> src_path;
+    vector<QNode*> nodes_0 = {get_node(src_node_id)};
+    src_path[src_node_id] = new Path(1, nodes_0);
 
-    priority_queue<pair<double, Routing*>, vector<pair<double, Routing*>>, Routing::cmp_routing> alter_route;
-    alter_route.emplace(1, src_route[src_node_id]);
+    priority_queue<pair<double, Path*>, vector<pair<double, Path*>>, Path::cmp_path> alter_path;
+    alter_path.emplace(1, src_path[src_node_id]);
 
-    while (!alter_route.empty()) {
-        double current_cost = alter_route.top().first;
-        int current_node = alter_route.top().second->get_end_node_id();
-        alter_route.pop();
-        if (src_route[current_node]->get_visit()) {
+    while (!alter_path.empty()) {
+        double current_cost = alter_path.top().first;
+        int current_node = alter_path.top().second->get_end_node_id();
+        alter_path.pop();
+        if (src_path[current_node]->get_visit()) {
             continue;
         }
 //        cout << "current " << current_node << " " << current_cost << endl;
-        src_route[current_node]->set_visit();
+        src_path[current_node]->set_visit();
         if (current_node != src_node_id && get_node(current_node)->is_user()) {
+            // avoid passing through user nodes
             continue;
-        }   // avoid passing through user nodes
+        }
         for (auto adj_node:get_node(current_node)->get_adjacent_nodes_id()) {
             if (closed_nodes.find(adj_node) != closed_nodes.end()) {
                 continue;
@@ -301,33 +305,33 @@ Routing* NetTopology::get_routing(int src_node_id, int dst_node_id,
             if (current_node == src_node_id && closed_edge_nodes.find(adj_node) != closed_edge_nodes.end()) {
                 continue;
             }
-            double new_cost = Routing::combine_cost(
-                    Routing::combine_cost(
+            double new_cost = Path::combine_cost(
+                    Path::combine_cost(
                             current_cost,
                             get_node(current_node)->get_success_rate()),
                     get_edge(current_node, adj_node)->get_success_rate());
 //            cout << "new " << i << " " << new_cost << endl;
-            vector<QNode*> new_path = src_route[current_node]->get_path();
-            new_path.push_back(get_node(adj_node));
-            if (src_route.find(adj_node) == src_route.end()) {
-                src_route[adj_node] = new Routing(new_cost, new_path);
-                alter_route.emplace(new_cost, src_route[adj_node]);
-            } else if (!src_route[adj_node]->get_visit() && new_cost > src_route[adj_node]->get_cost()) {
-                src_route[adj_node]->set_cost(new_cost);
-                src_route[adj_node]->set_path(new_path);
-                alter_route.emplace(new_cost, src_route[adj_node]);
+            vector<QNode*> new_nodes = src_path[current_node]->get_nodes();
+            new_nodes.push_back(get_node(adj_node));
+            if (src_path.find(adj_node) == src_path.end()) {
+                src_path[adj_node] = new Path(new_cost, new_nodes);
+                alter_path.emplace(new_cost, src_path[adj_node]);
+            } else if (!src_path[adj_node]->get_visit() && new_cost > src_path[adj_node]->get_cost()) {
+                src_path[adj_node]->set_cost(new_cost);
+                src_path[adj_node]->set_nodes(new_nodes);
+                alter_path.emplace(new_cost, src_path[adj_node]);
             }
         }
     }
 
-    if (src_route.find(dst_node_id) == src_route.end()) {
+    if (src_path.find(dst_node_id) == src_path.end()) {
 //        cout << "No Route between " << src_node_id << " and " << dst_node_id << endl;
         return nullptr;
     }
-    return src_route[dst_node_id];
+    return src_path[dst_node_id];
 }
 
-vector<Routing*> NetTopology::get_routings(int src_node_id, int dst_node_id, int k) {
+vector<Path*> NetTopology::get_paths(int src_node_id, int dst_node_id, int k) {
     if (get_node(src_node_id) == nullptr) {
         cout << "No Src Node " << src_node_id << endl;
         return {};
@@ -336,48 +340,49 @@ vector<Routing*> NetTopology::get_routings(int src_node_id, int dst_node_id, int
         return {};
     }
 
-    // get k shortest routings between src and dst with ksp algorithm
-    Routing* shortest_route = get_routing(src_node_id, dst_node_id);
-    if (!shortest_route) {
+    // get k shortest paths between src and dst with ksp algorithm
+    Path* shortest_path = get_path(src_node_id, dst_node_id);
+    if (!shortest_path) {
 //        cout << "No Route between " << src_node_id << " and " << dst_node_id << endl;
         return {};
     }
-    priority_queue<pair<double, Routing*>, vector<pair<double, Routing*>>, Routing::cmp_routing> alter_route;
-    alter_route.emplace(shortest_route->get_cost(), shortest_route);
+    priority_queue<pair<double, Path*>, vector<pair<double, Path*>>, Path::cmp_path> alter_path;
+    alter_path.emplace(shortest_path->get_cost(), shortest_path);
 
-    vector<Routing*> k_routes;
-    while (!alter_route.empty() && k_routes.size() < k) {
-        Routing* expand_route = alter_route.top().second;
-        alter_route.pop();
-        k_routes.push_back(expand_route);
-        Routing* pre_route;
+    vector<Path*> k_paths;
+    while (!alter_path.empty() && k_paths.size() < k) {
+        Path* expand_path = alter_path.top().second;
+        alter_path.pop();
+        k_paths.push_back(expand_path);
+        Path* precede_path;
         set<int> closed_nodes;
-        for (auto dev_node:expand_route->get_path()) {
+        for (auto dev_node:expand_path->get_nodes()) {
             int dev_id = dev_node->get_id();
             if (dev_id == dst_node_id) {
                 continue;
             } else if (dev_id == src_node_id) {
-                vector<QNode*> path_0 = {get_node(src_node_id)};
-                pre_route = new Routing(1, path_0);
+                vector<QNode*> nodes_0 = {get_node(src_node_id)};
+                precede_path = new Path(1, nodes_0);
             } else {
-                double new_cost = get_edge(pre_route->get_end_node_id(), dev_id)->get_success_rate();
-                pre_route->append_node(dev_node, new_cost);
+                double new_cost = get_edge(precede_path->get_end_node_id(),
+                                           dev_id)->get_success_rate();
+                precede_path->append_node(dev_node, new_cost);
             }
             set<int> closed_edge_nodes;
-            for (auto route:k_routes) {
-                int next_node_id = route->get_next_node_id(dev_id);
+            for (auto path:k_paths) {
+                int next_node_id = path->get_next_node_id(dev_id);
                 if (next_node_id >= 0) {
                     closed_edge_nodes.emplace(next_node_id);
                 }
             }
-            Routing* dev_route = get_routing(dev_node->get_id(), dst_node_id,
-                                             closed_nodes, closed_edge_nodes);
-            if (dev_route) {
-                dev_route->insert_routing(pre_route);
-                alter_route.emplace(dev_route->get_cost(), dev_route);
+            Path* dev_path = get_path(dev_node->get_id(), dst_node_id,
+                                      closed_nodes, closed_edge_nodes);
+            if (dev_path) {
+                dev_path->insert_path(precede_path);
+                alter_path.emplace(dev_path->get_cost(), dev_path);
             }
             closed_nodes.emplace(dev_id);
         }
     }
-    return k_routes;
+    return k_paths;
 }
