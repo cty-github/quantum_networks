@@ -2,8 +2,8 @@
 // Created by TianyaoChu on 2023/4/5.
 //
 
-#ifndef QUANTUM_NETWORKS_ROUTING_H
-#define QUANTUM_NETWORKS_ROUTING_H
+#ifndef QUANTUM_NETWORKS_PATH_H
+#define QUANTUM_NETWORKS_PATH_H
 
 #include "qnode.h"
 #include "qedge.h"
@@ -40,4 +40,4 @@ public:
     };
 };
 
-#endif //QUANTUM_NETWORKS_ROUTING_H
+#endif //QUANTUM_NETWORKS_PATH_H

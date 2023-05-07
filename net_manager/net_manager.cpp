@@ -3,88 +3,48 @@
 //
 
 #include "net_manager.h"
-#include "utils/tool.h"
-#include <iostream>
 
-EntangleRoute::EntangleRoute(EntangleLink* etg_link, Path* path, NetTopology* net_topo):
-etg_link(etg_link), path(path), net_topo(net_topo) {}
+RouteProject::RouteProject() {}
 
-EntangleRoute::~EntangleRoute() = default;
+RouteProject::~RouteProject() = default;
 
-EntangleLink* EntangleRoute::get_etg_link() const {
-    return etg_link;
+RouteManager::RouteManager() {}
+
+RouteManager::~RouteManager() = default;
+
+NetManager::NetManager(NetTopology* net_topo) {
+    net_rsrc = new NetResource(net_topo);
 }
 
-void EntangleRoute::print_etg_link() const {
-    cout << "Entangle Connection: Node " << etg_link->get_src_id() << " <-> Node " << etg_link->get_dst_id() << endl;
-    cout << "X Fidelity: " << etg_link->get_x_fidelity() << endl;
-    cout << "Z Fidelity: " << etg_link->get_z_fidelity() << endl;
-    cout << "Total Fidelity: " << etg_link->get_fidelity() << endl;
-}
+NetManager::~NetManager() = default;
 
-Path* EntangleRoute::get_path() const {
-    return path;
-}
-
-NetTopology* EntangleRoute::get_net_topo() const {
-    return net_topo;
-}
-
-LinkManager::LinkManager(NetTopology* net_topo): net_topo(net_topo) {}
-
-LinkManager::~LinkManager() = default;
-
-vector<EntangleLink*> LinkManager::generate_links(Path* path) {
-    vector<EntangleLink*> etg_links = {};
-    for (auto node:path->get_nodes()) {
-        int node_id_a = node->get_id();
-        if (node_id_a == path->get_end_node_id()) {
-            continue;
-        }
-        QNode* node_b = path->get_next_node(node_id_a);
-        int node_id_b = node_b->get_id();
-        QEdge* edge = net_topo->get_edge(node_id_a, node_id_b);
-        double a_x = node->get_pos_x();
-        double a_y = node->get_pos_y();
-        double b_x = node_b->get_pos_x();
-        double b_y = node_b->get_pos_y();
-        double p_x = edge->get_ptn_src()->get_pos_x();
-        double p_y = edge->get_ptn_src()->get_pos_y();
-        double dist_a = dist(a_x, a_y, p_x, p_y);
-        double dist_b = dist(b_x, b_y, p_x, p_y);
-        etg_links.push_back(edge->get_ptn_src()->try_generate_link(node_id_a, node_id_b, dist_a, dist_b));
-        node->occupy_memory(1);
-        node_b->occupy_memory(1);
+void NetManager::print_waiting_requests() {
+    for(int i = 0; i < waiting_requests.size(); i++) {
+        UserRequest* request = waiting_requests.front();
+        request->print_request();
+        waiting_requests.push(request);
+        waiting_requests.pop();
     }
-    return etg_links;
 }
 
-EntangleRoute* LinkManager::connect_links(const vector<EntangleLink*>& links, Path* path) {
-    cout << "Fidelity: ";
-    EntangleLink* etg_link = nullptr;
-    for (auto link:links) {
-        if (!etg_link) {
-            etg_link = link;
-            cout << etg_link->get_fidelity();
-        } else {
-            int repeater_id = etg_link->get_dst_id();
-            if (link->get_src_id() != repeater_id) {
-                cout << "Error: No Sequential Links" << endl;
-                return nullptr;
-            }
-            EntangleLink* old_etg_link = etg_link;
-            BSM* bsm = net_topo->get_node(repeater_id)->get_bsm();
-            etg_link = bsm->try_connect_link(old_etg_link, link);
-            delete old_etg_link;
-            delete link;
-            cout << " -> " << etg_link->get_fidelity();
-            net_topo->get_node(repeater_id)->release_memory(2);
-        }
+void NetManager::add_new_requests(const vector<UserRequest*>& new_requests) {
+    for (auto request:new_requests) {
+        waiting_requests.push(request);
     }
-    cout << endl;
-    return new EntangleRoute(etg_link, path, net_topo);
 }
 
-LinkProject::LinkProject() = default;
+void NetManager::schedule_new_routing() {
 
-LinkProject::~LinkProject() = default;
+}
+
+void NetManager::refresh_routing_state() {
+
+}
+
+void NetManager::check_success_project() {
+
+}
+
+void NetManager::end_user_connection() {
+
+}

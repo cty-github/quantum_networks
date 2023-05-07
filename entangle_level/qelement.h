@@ -63,4 +63,16 @@ unsigned int clr_bit(unsigned int base, int digit);
 unsigned int flip_bit(unsigned int base, int digit);
 unsigned int del_bit(unsigned int base, int digit);
 
+//class BellRes {
+//public:
+//    int pauli_z;
+//    int pauli_x;
+//    BellRes(int pauli_z, int pauli_x): pauli_z(pauli_z), pauli_x(pauli_x) {}
+//    ~BellRes() = default;
+//    BellRes& operator= (const BellRes& other) = default;
+//    BellRes operator+ (const BellRes& other) const {
+//        return {(pauli_z+other.pauli_z)%2, (pauli_x+other.pauli_x)%2};
+//    }
+//};
+
 #endif //QUANTUM_NETWORKS_QELEMENT_H

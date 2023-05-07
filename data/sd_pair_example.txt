@@ -1,0 +1,11 @@
+#	s_id	d_id	fide_th
+sd_pair	2	0	0.960595
+sd_pair	7	0	0.978474
+sd_pair	4	1	0.951631
+sd_pair	1	5	0.952121
+sd_pair	5	2	0.980518
+sd_pair	2	8	0.972166
+sd_pair	2	9	0.965576
+sd_pair	7	5	0.982637
+sd_pair	6	9	0.98209
+

@@ -3,45 +3,8 @@
 //
 
 #include "qdevice.h"
-#include "utils/rand.h"
-#include <cmath>
-#include <iostream>
 
 using namespace std;
-
-EntangleLink::EntangleLink(int src_node_id, int dst_node_id,
-                           double src_bit_flip, double dst_bit_flip,
-                           double src_phase_flip, double dst_phase_flip):
-src_node_id(src_node_id), dst_node_id(dst_node_id),
-x_fidelity(src_bit_flip*dst_bit_flip+(1-src_bit_flip)*(1-dst_bit_flip)),
-z_fidelity(src_phase_flip*dst_phase_flip+(1-src_phase_flip)*(1-dst_phase_flip)) {}
-
-EntangleLink::EntangleLink(int src_node_id, int dst_node_id,
-                           double x_fidelity, double z_fidelity):
-src_node_id(src_node_id), dst_node_id(dst_node_id),
-x_fidelity(x_fidelity), z_fidelity(z_fidelity) {}
-
-EntangleLink::~EntangleLink() = default;
-
-int EntangleLink::get_src_id() const {
-    return src_node_id;
-}
-
-int EntangleLink::get_dst_id() const {
-    return dst_node_id;
-}
-
-double EntangleLink::get_x_fidelity() const {
-    return x_fidelity;
-}
-
-double EntangleLink::get_z_fidelity() const {
-    return z_fidelity;
-}
-
-double EntangleLink::get_fidelity() const {
-    return z_fidelity * x_fidelity;
-}
 
 int PhotonSource::qubit_num = 0;
 
@@ -69,36 +32,6 @@ double PhotonSource::get_decay_rate() const {
 double PhotonSource::get_fidelity() const {
     return fidelity;
 }
-
-//QReg PhotonSource::generate_pair(int node_id_a, int node_id_b, double dist_a, double dist_b) const {
-//    double p_a = exp(-decay_rate*dist_a);
-//    double p_b = exp(-decay_rate*dist_b);
-//    auto* qubit_a = new Qubit(qubit_num, node_id_a, Zero, X, p_a);
-//    qubit_num++;
-//    auto* qubit_b = new Qubit(qubit_num, node_id_b, Zero, Z, p_b);
-//    qubit_num++;
-//    vector<Qubit*> qubits = {qubit_a, qubit_b};
-//    QReg qreg(qubits);
-//    qreg.hadamard(0);
-//    qreg.cnot(0, 1);
-//    return qreg;
-//}
-
-EntangleLink* PhotonSource::try_generate_link(int node_id_a, int node_id_b, double dist_a, double dist_b) const {
-    qubit_num += 2;
-    double p_a = exp(-decay_rate*dist_a);
-    double p_b = exp(-decay_rate*dist_b);
-    uniform_real_distribution<double> rand_double(0.0,1.0);
-    if (rand_double(rand_eng) > p_a * p_b) {
-        return nullptr;
-    }
-    return new EntangleLink(node_id_a, node_id_b,
-                            fidelity, fidelity);
-}
-
-//BellRes::BellRes(int pauli_z, int pauli_x): pauli_z(pauli_z), pauli_x(pauli_x) {}
-//
-//BellRes::~BellRes() = default;
 
 BSM::BSM(int id, double pos_x, double pos_y, double fidelity, double success_rate):
 id(id), pos_x(pos_x), pos_y(pos_y), z_fidelity(fidelity), x_fidelity(fidelity), success_rate(success_rate) {}
@@ -143,66 +76,3 @@ double BSM::get_success_rate() const {
 //    Qubit* qubit_x = qreg->measure(x_id, x_fidelity);
 //    return {qubit_z->get_value(), qubit_x->get_value()};
 //}
-
-EntangleLink* BSM::try_connect_link(EntangleLink* src_link, EntangleLink* dst_link) const {
-    if (src_link->get_dst_id() != dst_link->get_src_id()) {
-        cout << "Error: Not the Same Repeater" << endl;
-        return nullptr;
-    }
-    int new_src_id = src_link->get_src_id();
-    int new_dst_id = dst_link->get_dst_id();
-    double src_x_f = src_link->get_x_fidelity();
-    double src_z_f = src_link->get_z_fidelity();
-    double dst_x_f = dst_link->get_x_fidelity();
-    double dst_z_f = dst_link->get_z_fidelity();
-
-    double new_x_fidelity = src_x_f * dst_x_f + (1-src_x_f) * (1-dst_x_f);
-    new_x_fidelity = new_x_fidelity * x_fidelity + (1-new_x_fidelity) * (1-x_fidelity);
-    double new_z_fidelity = src_z_f * dst_z_f + (1-src_z_f) * (1-dst_z_f);
-    new_z_fidelity = new_z_fidelity * z_fidelity + (1-new_z_fidelity) * (1-z_fidelity);
-
-    uniform_real_distribution<double> rand_double(0.0,1.0);
-    if (rand_double(rand_eng) > success_rate) {
-        return nullptr;
-    }
-    return new EntangleLink(new_src_id, new_dst_id,
-                            new_x_fidelity, new_z_fidelity);
-}
-
-//EntangleRoute::EntangleRoute(Path* route, NetTopology* net_topo, PhotonSource* ptn_src, BSM* bsm):
-//        entangle_connect(), net_topo(net_topo), route(route), ptn_src(ptn_src), bsm(bsm) {}
-//
-//EntangleRoute::~EntangleRoute() = default;
-//
-//QReg* EntangleRoute::build_connect() {
-//    for (auto node:route->get_path()) {
-//        int node_id_a = node->get_id();
-//        if (node_id_a == route->get_end_node_id()) {
-//            continue;
-//        }
-//        int node_id_b = route->get_next_node_id(node_id_a);
-//        double dist = net_topo->get_edge(node_id_a, node_id_b)->get_distance();
-//        QReg entangle_link = ptn_src->generate_pair(node_id_a, node_id_b, dist/2, dist/2);
-//        entangle_connect.tensor_product(entangle_link);
-//    }
-//    BellRes bell_res(0, 0);
-//    for (auto node:route->get_path()) {
-//        int node_id = node->get_id();
-//        if (node_id == route->get_start_node_id() || node_id == route->get_end_node_id()) {
-//            continue;
-//        }
-//        bell_res = bell_res + bsm->internal_measure(&entangle_connect, node_id);
-//    }
-//    int dst_node_id = route->get_end_node_id();
-//    int dst_q_id = entangle_connect.get_qubit(dst_node_id, Z);
-//    int dst_r_index = entangle_connect.get_r_index(dst_q_id);
-//    if (bell_res.pauli_x) {
-//        entangle_connect.pauli_x(dst_r_index);
-//    }
-//    if (bell_res.pauli_z) {
-//        entangle_connect.pauli_z(dst_r_index);
-//    }
-//    return &entangle_connect;
-//}
-//
-//bool EntangleRoute::test_connect() {}

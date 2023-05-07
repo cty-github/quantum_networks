@@ -7,7 +7,7 @@
 
 #include "qnode.h"
 #include "qedge.h"
-#include "routing.h"
+#include "path.h"
 #include "qdevice/device_manager.h"
 #include <string>
 #include <vector>

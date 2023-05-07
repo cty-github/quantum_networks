@@ -1,0 +1,20 @@
+#	type	id	pos_x	pos_y	n_mem	suc_prob
+node	user	0	0	0	14	0.998001
+node	user	1	0	1	11	0.998001
+node	user	2	0	2	13	0.998001
+node	user	3	1	0	14	0.998001
+node	user	4	1	2	11	0.998001
+node	user	5	2	0	13	0.998001
+node	user	6	2	1	11	0.998001
+node	user	7	2	2	13	0.998001
+node	repeater	8	1	1	10	0.998001
+
+#	node_A	node_B	cap	de_rate
+edge	0	8	11	0.0002
+edge	1	8	11	0.0002
+edge	2	8	11	0.0002
+edge	3	8	11	0.0002
+edge	4	8	11	0.0002
+edge	5	8	11	0.0002
+edge	6	8	11	0.0002
+edge	7	8	11	0.0002

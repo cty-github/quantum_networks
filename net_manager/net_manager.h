@@ -5,42 +5,52 @@
 #ifndef QUANTUM_NETWORKS_NET_MANAGER_H
 #define QUANTUM_NETWORKS_NET_MANAGER_H
 
+#include "user_service.h"
+#include "net_resource.h"
+#include "link_manager.h"
 #include "net_topology/net_topology.h"
-#include "net_topology/routing.h"
+#include "net_topology/path.h"
 #include "qdevice/qdevice.h"
 #include <utility>
+#include <vector>
+#include <queue>
+#include <map>
 
-class EntangleRoute {
+class RouteProject {
 private:
-    EntangleLink* etg_link;
-    Path* path;
-    NetTopology* net_topo;
+    vector<LinkProject*> link_project;
+    LinkManager* link_manager{};
+    bool success;
 public:
-    EntangleRoute(EntangleLink* etg_link, Path* path, NetTopology* net_topo);
-    ~EntangleRoute();
-    EntangleLink* get_etg_link() const;
-    void print_etg_link() const;
-    Path* get_path() const;
-    NetTopology* get_net_topo() const;
+    RouteProject();
+    ~RouteProject();
 };
 
-class LinkManager {
+class RouteManager {
 private:
-    vector<EntangleLink*> etg_link_pool;
-    NetTopology* net_topo;
+    vector<RouteProject*> route_projects;
+    LinkManager* recover_links{};
 public:
-    explicit LinkManager(NetTopology* net_topo);
-    ~LinkManager();
-    vector<EntangleLink*> generate_links(Path* path);
-    EntangleRoute* connect_links(const vector<EntangleLink*>& links, Path* path);
+    RouteManager();
+    ~RouteManager();
 };
 
-class LinkProject {
+class NetManager {
 private:
-    vector<pair<int, int>> requests;
+    queue<UserRequest*> waiting_requests;
+    vector<UserRequest*> processing_requests;
+    NetResource* net_rsrc{};
+    RouteManager* route_manager{};
+    vector<UserConnection*> user_connections;
 public:
-    LinkProject();
-    ~LinkProject();
+    explicit NetManager(NetTopology* net_topo);
+    ~NetManager();
+    void print_waiting_requests();
+    void add_new_requests(const vector<UserRequest*>& new_requests);
+    void schedule_new_routing();
+    void refresh_routing_state();
+    void check_success_project();
+    void end_user_connection();
 };
 
 #endif //QUANTUM_NETWORKS_NET_MANAGER_H
