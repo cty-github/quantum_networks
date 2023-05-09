@@ -9,6 +9,7 @@
 
 class QEdge {
 private:
+    int edge_id;
     int node_id_a;
     int node_id_b;
     int capacity;
@@ -18,10 +19,12 @@ private:
     double success_rate;
     PhotonSource* ptn_src;
 public:
-    QEdge(int node_id_a, int node_id_b, int capacity, double distance, double success_rate, PhotonSource* ptn_src);
+    QEdge(int edge_id, int node_id_a, int node_id_b, int capacity,
+          double distance, double success_rate, PhotonSource* ptn_src);
     QEdge(const QEdge& edge);
     ~QEdge();
     bool connect_node(int node_id) const;
+    int get_edge_id() const;
     int get_node_id_a() const;
     int get_node_id_b() const;
     int get_capacity() const;

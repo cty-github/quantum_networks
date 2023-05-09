@@ -8,9 +8,34 @@
 #include <cmath>
 #include <iostream>
 
-LinkProject::LinkProject() {}
+LinkProject::LinkProject(int s_node_id, int d_node_id, int edge_id, int rsrc_num, UserRequest* request):
+        s_node_id(s_node_id), d_node_id(d_node_id), edge_id(edge_id), rsrc_num(rsrc_num), request(request) {}
 
 LinkProject::~LinkProject() = default;
+
+int LinkProject::get_s_node_id() const {
+    return s_node_id;
+}
+
+int LinkProject::get_d_node_id() const {
+    return d_node_id;
+}
+
+int LinkProject::get_edge_id() const {
+    return edge_id;
+}
+
+int LinkProject::get_rsrc_num() const {
+    return rsrc_num;
+}
+
+UserRequest* LinkProject::get_request() const {
+    return request;
+}
+
+LinkGenerator::LinkGenerator(int edge_id): edge_id(edge_id), total_rsrc_num(0) {}
+
+LinkGenerator::~LinkGenerator() = default;
 
 LinkManager::LinkManager(NetTopology* net_topo): net_topo(net_topo) {}
 

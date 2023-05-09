@@ -133,7 +133,7 @@ bool DeviceManager::save_dev(const string& filepath) const {
         cout << "Cannot Open File " << filepath << endl;
         return false;
     }
-    file << "#\tid\tpos_x\tpos_y\tde_rate\tfide" << endl;
+    file << "#\t\tid\tpos_x\tpos_y\tde_rate\tfide" << endl;
     for (auto & it : ptn_src_list) {
         PhotonSource* ptn_src = it.second;
         file << "ptnsrc\t";

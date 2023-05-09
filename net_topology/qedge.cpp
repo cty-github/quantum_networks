@@ -4,13 +4,15 @@
 
 #include "qedge.h"
 
-QEdge::QEdge(int node_id_a, int node_id_b, int capacity, double distance, double success_rate, PhotonSource* ptn_src):
-node_id_a(node_id_a), node_id_b(node_id_b),
+QEdge::QEdge(int edge_id, int node_id_a, int node_id_b, int capacity,
+             double distance, double success_rate, PhotonSource* ptn_src):
+edge_id(edge_id), node_id_a(node_id_a), node_id_b(node_id_b),
 capacity(capacity), channel_occupied(0),
 distance(distance), decay_rate(ptn_src->get_decay_rate()),
 success_rate(success_rate), ptn_src(ptn_src) {}
 
 QEdge::QEdge(const QEdge& edge) {
+    edge_id = edge.edge_id;
     node_id_a = edge.node_id_a;
     node_id_b = edge.node_id_b;
     capacity = edge.capacity;
@@ -25,6 +27,10 @@ QEdge::~QEdge() = default;
 
 bool QEdge::connect_node(int node_id) const {
     return node_id_a == node_id || node_id_b == node_id;
+}
+
+int QEdge::get_edge_id() const {
+    return edge_id;
 }
 
 int QEdge::get_node_id_a() const {

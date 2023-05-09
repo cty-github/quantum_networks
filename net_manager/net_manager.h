@@ -18,36 +18,56 @@
 
 class RouteProject {
 private:
-    vector<LinkProject*> link_project;
-    LinkManager* link_manager{};
+    vector<LinkProject*> link_projects;
+    Path* path;
+    UserRequest* request;
     bool success;
 public:
-    RouteProject();
+    RouteProject(int rsrc_num, Path* path, UserRequest* request);
     ~RouteProject();
+    vector<LinkProject*> get_link_projs();
+    Path* get_path();
+    UserRequest* get_request();
+    bool is_success() const;
+    void set_success();
 };
 
 class RouteManager {
 private:
     vector<RouteProject*> route_projects;
-    LinkManager* recover_links{};
+    LinkManager* link_manager;
 public:
     RouteManager();
     ~RouteManager();
+    void add_new_routing(RouteProject* new_route_proj);
+    void refresh_routing_state();
 };
 
 class NetManager {
 private:
-    queue<UserRequest*> waiting_requests;
-    vector<UserRequest*> processing_requests;
-    NetResource* net_rsrc{};
-    RouteManager* route_manager{};
+    NetTopology* net_topo;
+    map<int, SDPair*> sd_pairs;
+    map<int, vector<Path*>> candidate_paths;
+    map<int, pair<UserRequest*, int>> waiting_requests;
+    map<int, pair<UserRequest*, int>> processing_requests;
+    NetResource* net_rsrc;
+    RouteManager* route_manager;
     vector<UserConnection*> user_connections;
 public:
-    explicit NetManager(NetTopology* net_topo);
+    NetManager(NetTopology* net_topo, int user_num);
+    NetManager(const string& filepath, NetTopology* net_topo);
     ~NetManager();
+    void load_sd_pairs(const string& filepath);
+    bool save_sd_pairs(const string& filepath) const;
+    Path* get_path(int src_node_id, int dst_node_id);
+    vector<Path*> get_paths(int src_node_id, int dst_node_id, int k);
+    bool initialize(int k);
     void print_waiting_requests();
+    void print_processing_requests();
+    vector<UserRequest*> random_request(double sd_prob=0.4, double req_rate=0.2);
     void add_new_requests(const vector<UserRequest*>& new_requests);
-    void schedule_new_routing();
+    vector<RouteProject*> calculate_new_routings();
+    void schedule_new_routings();
     void refresh_routing_state();
     void check_success_project();
     void end_user_connection();

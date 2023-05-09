@@ -45,7 +45,7 @@ node_num(0), edge_num(0) {
                 double x_fidelity = p_i * p_j + (1-p_i) * (1-p_j);
                 double z_fidelity = p_i * p_j + (1-p_i) * (1-p_j);
                 double success_rate = x_fidelity * z_fidelity;
-                add_edge(i, j, rand_int(rand_eng),
+                add_edge(edge_num, i, j, rand_int(rand_eng),
                          get_distance(i, j), success_rate, ptn_src);
             }
         }
@@ -86,11 +86,12 @@ NetTopology::NetTopology(const string& filepath, DeviceManager* dev_mgr): node_n
             ss >> id >> pos_x >> pos_y >> memory_size >> bsm_id;
             add_node(id, node_type, pos_x, pos_y, memory_size, dev_mgr->get_bsm(bsm_id));
         } else if (key == "edge") {
+            int edge_id;
             int node_id_a;
             int node_id_b;
             int capacity;
             int ptn_src_id;
-            ss >> node_id_a >> node_id_b >> capacity >> ptn_src_id;
+            ss >> edge_id >> node_id_a >> node_id_b >> capacity >> ptn_src_id;
             double a_x = nodes[node_id_a]->get_pos_x();
             double a_y = nodes[node_id_a]->get_pos_y();
             double b_x = nodes[node_id_b]->get_pos_x();
@@ -103,7 +104,9 @@ NetTopology::NetTopology(const string& filepath, DeviceManager* dev_mgr): node_n
             double x_fidelity = p_a * p_b + (1-p_a) * (1-p_b);
             double z_fidelity = p_a * p_b + (1-p_a) * (1-p_b);
             double success_rate = x_fidelity * z_fidelity;
-            add_edge(node_id_a, node_id_b, capacity, get_distance(node_id_a, node_id_b), success_rate, ptn_src);
+            add_edge(edge_id, node_id_a, node_id_b,
+                     capacity, get_distance(node_id_a, node_id_b),
+                     success_rate, ptn_src);
         } else {
             cout << "Error in File" << endl;
         }
@@ -158,7 +161,7 @@ double NetTopology::get_distance(int node_id_a, int node_id_b) const {
                 nodes.find(node_id_b)->second->get_pos_y());
 }
 
-bool NetTopology::add_edge(int node_id_a, int node_id_b, int capacity,
+bool NetTopology::add_edge(int edge_id, int node_id_a, int node_id_b, int capacity,
                            double distance, double success_rate, PhotonSource* ptn_src) {
     if (nodes.find(node_id_a) == nodes.end()) {
         cout << "No Node " << node_id_a << endl;
@@ -167,25 +170,27 @@ bool NetTopology::add_edge(int node_id_a, int node_id_b, int capacity,
         cout << "No Node " << node_id_b << endl;
         return false;
     }
-    if (edges[node_id_a].find(node_id_b) != edges[node_id_a].end()) {
+    if (edges_node[node_id_a].find(node_id_b) != edges_node[node_id_a].end()) {
         cout << "Exist Edge between " << node_id_a << " and " << node_id_b << endl;
         return false;
     } else if (node_id_a == node_id_b) {
         cout << "No Loop in the Net" << endl;
         return false;
     }
-    auto* new_edge = new QEdge(node_id_a, node_id_b, capacity, distance, success_rate, ptn_src);
-    edges[node_id_a][node_id_b] = new_edge;
-    edges[node_id_b][node_id_a] = new_edge;
-    edge_num++;
+    auto* new_edge = new QEdge(edge_id, node_id_a, node_id_b, capacity, distance, success_rate, ptn_src);
+    edges_node[node_id_a][node_id_b] = new_edge;
+    edges_node[node_id_b][node_id_a] = new_edge;
+    edges_id[edge_id] = new_edge;
     nodes[node_id_a]->add_adjacent_node(node_id_b);
     nodes[node_id_b]->add_adjacent_node(node_id_a);
+    edge_num++;
     return true;
 }
 
 bool NetTopology::add_edge(const QEdge &edge) {
     int node_id_a = edge.get_node_id_a();
     int node_id_b = edge.get_node_id_b();
+    int edge_id = edge.get_edge_id();
     if (nodes.find(node_id_a) == nodes.end()) {
         cout << "No Node " << node_id_a << endl;
         return false;
@@ -193,16 +198,17 @@ bool NetTopology::add_edge(const QEdge &edge) {
         cout << "No Node " << node_id_b << endl;
         return false;
     }
-    if (edges[node_id_a].find(node_id_b) != edges[node_id_a].end()) {
+    if (edges_node[node_id_a].find(node_id_b) != edges_node[node_id_a].end()) {
         cout << "Exist Edge between " << node_id_a << " and " << node_id_b << endl;
         return false;
     }
     auto* new_edge = new QEdge(edge);
-    edges[node_id_a][node_id_b] = new_edge;
-    edges[node_id_b][node_id_a] = new_edge;
-    edge_num++;
+    edges_node[node_id_a][node_id_b] = new_edge;
+    edges_node[node_id_b][node_id_a] = new_edge;
+    edges_id[edge_id] = new_edge;
     nodes[node_id_a]->add_adjacent_node(node_id_b);
     nodes[node_id_b]->add_adjacent_node(node_id_a);
+    edge_num++;
     return true;
 }
 
@@ -217,10 +223,17 @@ QEdge* NetTopology::get_edge(int node_id_a, int node_id_b) {
     if (nodes.find(node_id_a) == nodes.end() || nodes.find(node_id_b) == nodes.end()) {
         return nullptr;
     }
-    if (edges[node_id_a].find(node_id_b) == edges[node_id_a].end()) {
+    if (edges_node[node_id_a].find(node_id_b) == edges_node[node_id_a].end()) {
         return nullptr;
     }
-    return edges[node_id_a][node_id_b];
+    return edges_node[node_id_a][node_id_b];
+}
+
+QEdge* NetTopology::get_edge(int edge_id) {
+    if (edges_id.find(edge_id) == edges_id.end()) {
+        return nullptr;
+    }
+    return edges_id[edge_id];
 }
 
 bool NetTopology::save_topo(const string& filepath) const {
@@ -230,12 +243,12 @@ bool NetTopology::save_topo(const string& filepath) const {
         cout << "Cannot Open File " << filepath << endl;
         return false;
     }
-    file << "#\ttype\tid\tpos_x\tpos_y\tn_mem\tsuc_prob" << endl;
+    file << "#\t\ttype\t\tid\tpos_x\tpos_y\tn_mem\tbsm" << endl;
     for (auto & it : nodes) {
         QNode* node = it.second;
         file << "node\t";
         if (node->is_user()) {
-            file << "user\t";
+            file << "user\t\t";
         } else if (node->is_repeater()) {
             file << "repeater\t";
         } else {
@@ -244,20 +257,21 @@ bool NetTopology::save_topo(const string& filepath) const {
         file << node->get_id() << '\t';
         file << node->get_pos_x() << '\t';
         file << node->get_pos_y() << '\t';
-        file << node->get_memory_size() << '\t';
-        file << node->get_success_rate() << endl;
+        file << node->get_memory_size() << "\t\t";
+        file << node->get_bsm()->get_id() << endl;
     }
     file << endl;
-    file << "#\tnode_A\tnode_B\tcap\tde_rate" << endl;
-    for (auto & it_a : edges) {
+    file << "#\t\tid\t\tnode_A\tnode_B\tcap\tptn_src" << endl;
+    for (auto & it_a : edges_node) {
         for (auto & it_b : it_a.second) {
             QEdge* edge = it_b.second;
             if (it_a.first < it_b.first) {
                 file << "edge\t";
-                file << edge->get_node_id_a() << '\t';
-                file << edge->get_node_id_b() << '\t';
+                file << edge->get_edge_id() << "\t\t";
+                file << edge->get_node_id_a() << "\t\t";
+                file << edge->get_node_id_b() << "\t\t";
                 file << edge->get_capacity() << '\t';
-                file << edge->get_decay_rate() << endl;
+                file << edge->get_ptn_src()->get_id() << endl;
             }
         }
     }
@@ -280,7 +294,8 @@ Path* NetTopology::get_path(int src_node_id, int dst_node_id,
     // get the shortest path between src and dst with dijkstra algorithm
     map<int, Path*> src_path;
     vector<QNode*> nodes_0 = {get_node(src_node_id)};
-    src_path[src_node_id] = new Path(1, nodes_0);
+    vector<QEdge*> edges_0 = {};
+    src_path[src_node_id] = new Path(1, nodes_0, edges_0);
 
     priority_queue<pair<double, Path*>, vector<pair<double, Path*>>, Path::cmp_path> alter_path;
     alter_path.emplace(1, src_path[src_node_id]);
@@ -313,12 +328,15 @@ Path* NetTopology::get_path(int src_node_id, int dst_node_id,
 //            cout << "new " << i << " " << new_cost << endl;
             vector<QNode*> new_nodes = src_path[current_node]->get_nodes();
             new_nodes.push_back(get_node(adj_node));
+            vector<QEdge*> new_edges = src_path[current_node]->get_edges();
+            new_edges.push_back(get_edge(current_node, adj_node));
             if (src_path.find(adj_node) == src_path.end()) {
-                src_path[adj_node] = new Path(new_cost, new_nodes);
+                src_path[adj_node] = new Path(new_cost, new_nodes, new_edges);
                 alter_path.emplace(new_cost, src_path[adj_node]);
             } else if (!src_path[adj_node]->get_visit() && new_cost > src_path[adj_node]->get_cost()) {
                 src_path[adj_node]->set_cost(new_cost);
                 src_path[adj_node]->set_nodes(new_nodes);
+                src_path[adj_node]->set_edges(new_edges);
                 alter_path.emplace(new_cost, src_path[adj_node]);
             }
         }
@@ -362,11 +380,13 @@ vector<Path*> NetTopology::get_paths(int src_node_id, int dst_node_id, int k) {
                 continue;
             } else if (dev_id == src_node_id) {
                 vector<QNode*> nodes_0 = {get_node(src_node_id)};
-                precede_path = new Path(1, nodes_0);
+                vector<QEdge*> edges_0 = {};
+                precede_path = new Path(1, nodes_0, edges_0);
             } else {
-                double new_cost = get_edge(precede_path->get_end_node_id(),
-                                           dev_id)->get_success_rate();
-                precede_path->append_node(dev_node, new_cost);
+                QEdge* dev_edge = get_edge(precede_path->get_end_node_id(),
+                                           dev_id);
+                double new_cost = dev_edge->get_success_rate();
+                precede_path->append_node(dev_node, dev_edge, new_cost);
             }
             set<int> closed_edge_nodes;
             for (auto path:k_paths) {

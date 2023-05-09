@@ -19,7 +19,8 @@ private:
     int node_num;
     int edge_num;
     map<int, QNode*> nodes;
-    map<int, map<int, QEdge*>> edges;
+    map<int, map<int, QEdge*>> edges_node;
+    map<int, QEdge*> edges_id;
 public:
     NetTopology();
     NetTopology(DeviceManager* dev_mgr, int user_num, int repeater_num,
@@ -31,11 +32,12 @@ public:
     bool add_node(int id, NodeType node_type, double pos_x, double pos_y, int memory_size, BSM* bsm);
     bool add_node(const QNode &node);
     double get_distance(int node_id_a, int node_id_b) const;
-    bool add_edge(int node_id_a, int node_id_b, int capacity,
+    bool add_edge(int edge_id, int node_id_a, int node_id_b, int capacity,
                   double distance, double success_rate, PhotonSource* ptn_src);
     bool add_edge(const QEdge &edge);
     QNode* get_node(int node_id);
     QEdge* get_edge(int node_id_a, int node_id_b);
+    QEdge* get_edge(int edge_id);
     bool save_topo(const string& filepath) const;
     Path* get_path(int src_node_id, int dst_node_id,
                       const set<int>& closed_nodes={},
