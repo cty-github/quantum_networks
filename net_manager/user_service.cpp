@@ -83,7 +83,46 @@ void UserRequest::print_request() const {
     cout << s_node_id << "->" << d_node_id << ": " << fide_th;
 }
 
-UserConnection::UserConnection(EntangleConnection* etg_cxn, int s_node_id, int d_node_id, double fidelity):
-etg_cxn(etg_cxn), s_node_id(s_node_id), d_node_id(d_node_id), fidelity(fidelity) {}
+UserConnection::UserConnection(EntangleConnection* etg_cxn, int request_id):
+etg_cxn(etg_cxn), request_id(request_id), finished(false) {}
 
 UserConnection::~UserConnection() = default;
+
+int UserConnection::get_s_node_id() const {
+    return etg_cxn->get_s_id();
+}
+
+int UserConnection::get_d_node_id() const {
+    return etg_cxn->get_d_id();
+}
+
+double UserConnection::get_fidelity() const {
+    return etg_cxn->get_fidelity();
+}
+
+int UserConnection::get_age() const {
+    return etg_cxn->get_age();
+}
+
+void UserConnection::add_age(int time) {
+    etg_cxn->add_age(time);
+}
+
+bool UserConnection::is_expired() const {
+    return etg_cxn->is_expired();
+}
+
+int UserConnection::get_request_id() const {
+    return request_id;
+}
+
+bool UserConnection::is_finished() const {
+    return finished;
+}
+
+void UserConnection::finish_connection() {
+    finished = true;
+    cout << "Finish Connection of User Request " << request_id << endl;
+    etg_cxn->print_etg_cxn();
+    cout << endl;
+}

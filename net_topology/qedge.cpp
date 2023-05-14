@@ -7,18 +7,14 @@
 QEdge::QEdge(int edge_id, int node_id_a, int node_id_b, int capacity,
              double distance, double success_rate, PhotonSource* ptn_src):
 edge_id(edge_id), node_id_a(node_id_a), node_id_b(node_id_b),
-capacity(capacity), channel_occupied(0),
-distance(distance), decay_rate(ptn_src->get_decay_rate()),
-success_rate(success_rate), ptn_src(ptn_src) {}
+capacity(capacity), distance(distance), success_rate(success_rate), ptn_src(ptn_src) {}
 
 QEdge::QEdge(const QEdge& edge) {
     edge_id = edge.edge_id;
     node_id_a = edge.node_id_a;
     node_id_b = edge.node_id_b;
     capacity = edge.capacity;
-    channel_occupied = edge.channel_occupied;
     distance = edge.distance;
-    decay_rate = edge.decay_rate;
     success_rate = edge.success_rate;
     ptn_src = edge.ptn_src;
 }
@@ -45,21 +41,8 @@ int QEdge::get_capacity() const {
     return capacity;
 }
 
-bool QEdge::occupy_channel(int n_qubit) {
-    if (capacity - channel_occupied >= n_qubit) {
-        channel_occupied += n_qubit;
-        return true;
-    } else {
-        return false;
-    }
-}
-
 double QEdge::get_distance() const {
     return distance;
-}
-
-double QEdge::get_decay_rate() const {
-    return decay_rate;
 }
 
 double QEdge::get_success_rate() const {

@@ -22,10 +22,10 @@ public:
     bool reserve_edge_capacity(int edge_id, int num);
     bool release_node_memory(int node_id, int num);
     bool release_edge_capacity(int edge_id, int num);
-    bool check_resource(int s_id, int d_id, int num) const;
-    int max_resource(int s_id, int d_id) const;
-    bool reserve_resource(int s_id, int d_id, int num);
-    bool release_resource(int s_id, int d_id, int num);
+    bool check_link_resource(int s_id, int d_id, int num) const;
+    int max_link_resource(int s_id, int d_id) const;
+    bool reserve_link_resource(int s_id, int d_id, int num);
+    bool release_link_resource(int s_id, int d_id, int num);
 };
 
 #endif //QUANTUM_NETWORKS_NET_RESOURCE_H

@@ -42,9 +42,7 @@ node_num(0), edge_num(0) {
                 double ptn_y = ptn_src->get_pos_y();
                 double p_i = exp(-ptn_src->get_decay_rate()*dist(i_x, i_y, ptn_x, ptn_y));
                 double p_j = exp(-ptn_src->get_decay_rate()*dist(j_x, j_y, ptn_x, ptn_y));
-                double x_fidelity = p_i * p_j + (1-p_i) * (1-p_j);
-                double z_fidelity = p_i * p_j + (1-p_i) * (1-p_j);
-                double success_rate = x_fidelity * z_fidelity;
+                double success_rate = p_i * p_j;
                 add_edge(edge_num, i, j, rand_int(rand_eng),
                          get_distance(i, j), success_rate, ptn_src);
             }
@@ -103,7 +101,7 @@ NetTopology::NetTopology(const string& filepath, DeviceManager* dev_mgr): node_n
             double p_b = exp(-ptn_src->get_decay_rate()*dist(b_x, b_y, ptn_x, ptn_y));
             double x_fidelity = p_a * p_b + (1-p_a) * (1-p_b);
             double z_fidelity = p_a * p_b + (1-p_a) * (1-p_b);
-            double success_rate = x_fidelity * z_fidelity;
+            double success_rate = p_a * p_b;
             add_edge(edge_id, node_id_a, node_id_b,
                      capacity, get_distance(node_id_a, node_id_b),
                      success_rate, ptn_src);
@@ -236,6 +234,10 @@ QEdge* NetTopology::get_edge(int edge_id) {
     return edges_id[edge_id];
 }
 
+map<int, QEdge *> NetTopology::get_edges() {
+    return edges_id;
+}
+
 bool NetTopology::save_topo(const string& filepath) const {
     ofstream file;
     file.open(filepath,ios::out);
@@ -343,7 +345,7 @@ Path* NetTopology::get_path(int src_node_id, int dst_node_id,
     }
 
     if (src_path.find(dst_node_id) == src_path.end()) {
-//        cout << "No Route between " << src_node_id << " and " << dst_node_id << endl;
+//        cout << "No Route between " << node_id_a << " and " << node_id_b << endl;
         return nullptr;
     }
     return src_path[dst_node_id];
@@ -361,7 +363,7 @@ vector<Path*> NetTopology::get_paths(int src_node_id, int dst_node_id, int k) {
     // get k shortest paths between src and dst with ksp algorithm
     Path* shortest_path = get_path(src_node_id, dst_node_id);
     if (!shortest_path) {
-//        cout << "No Route between " << src_node_id << " and " << dst_node_id << endl;
+//        cout << "No Route between " << node_id_a << " and " << node_id_b << endl;
         return {};
     }
     priority_queue<pair<double, Path*>, vector<pair<double, Path*>>, Path::cmp_path> alter_path;

@@ -52,12 +52,20 @@ public:
 class UserConnection {
 private:
     EntangleConnection* etg_cxn;
-    int s_node_id;
-    int d_node_id;
-    double fidelity;
+    int request_id;
+    bool finished;
 public:
-    UserConnection(EntangleConnection* etg_cxn, int s_node_id, int d_node_id, double fidelity);
+    UserConnection(EntangleConnection* etg_cxn, int request_id);
     ~UserConnection();
+    int get_s_node_id() const;
+    int get_d_node_id() const;
+    double get_fidelity() const;
+    int get_age() const;
+    void add_age(int time);
+    bool is_expired() const;
+    int get_request_id() const;
+    bool is_finished() const;
+    void finish_connection();
 };
 
 #endif //QUANTUM_NETWORKS_USER_SERVICE_H

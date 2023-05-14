@@ -4,8 +4,6 @@
 
 #include "qnetwork.h"
 #include "utils/rand.h"
-#include <sstream>
-#include <fstream>
 #include <iostream>
 
 QNetwork::QNetwork(int ptn_src_num, int bsm_num,
@@ -15,12 +13,14 @@ QNetwork::QNetwork(int ptn_src_num, int bsm_num,
     device_manager = new DeviceManager(ptn_src_num, bsm_num, size, decay_rate, z_fidelity, x_fidelity);
     net_topo = new NetTopology(device_manager, user_num, repeater_num, size, alpha, beta);
     net_manager = new NetManager(net_topo, user_num);
+    current_time_point = get_current_time();
 }
 
 QNetwork::QNetwork(const string& net_dev_filepath, const string& net_topo_filepath, const string& sd_pair_filepath) {
     device_manager = new DeviceManager(net_dev_filepath);
     net_topo = new NetTopology(net_topo_filepath, device_manager);
     net_manager = new NetManager(sd_pair_filepath, net_topo);
+    current_time_point = get_current_time();
 }
 
 QNetwork::~QNetwork() = default;
@@ -93,27 +93,32 @@ bool QNetwork::initialize(int k) {
     cout << "Node request_num: " << net_topo->get_node_num() << endl;
     cout << "Edge request_num: " << net_topo->get_edge_num() << endl;
     cout << endl;
-    return net_manager->initialize(k);
+
+    bool initialize_res = net_manager->initialize(k);
+    ClockTime last_time_point = current_time_point;
+    current_time_point = get_current_time();
+    int time_interval = get_time_interval(current_time_point, last_time_point);
+    cout << "Initialize Time: " << (double)time_interval/10000 << "s" << endl;
+    cout << endl;
+    return initialize_res;
 }
 
 bool QNetwork::work_cycle() {
+    ClockTime last_time_point = current_time_point;
+    current_time_point = get_current_time();
+    int time_interval = get_time_interval(current_time_point, last_time_point);
+
     cout << "Work Cycle" << endl;
-    cout << "----------" << endl;
+    cout << "Duration: " << time_interval << endl;
+    cout << "---------------------------" << endl;
+
     net_manager->add_new_requests(net_manager->random_request(0.4, 0.2));
     net_manager->print_waiting_requests();
     net_manager->schedule_new_routings();
     net_manager->print_processing_requests();
 
-    net_manager->refresh_routing_state();
+    net_manager->refresh_routing_state(time_interval);
     net_manager->check_success_project();
-    net_manager->end_user_connection();
+    net_manager->finish_user_connection(time_interval);
     return true;
 }
-
-//EntangleConnection* QNetwork::generate_etg_route(Path* route) {
-//    if (!link_mgr) {
-//        cout << "No Link Manager" << endl;
-//        return nullptr;
-//    }
-//    return link_mgr->connect_links(link_mgr->generate_links(route), route);
-//}

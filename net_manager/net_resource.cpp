@@ -71,7 +71,7 @@ bool NetResource::release_edge_capacity(int edge_id, int num) {
     return true;
 }
 
-bool NetResource::check_resource(int s_id, int d_id, int num) const {
+bool NetResource::check_link_resource(int s_id, int d_id, int num) const {
     if (get_free_node_memory(s_id) < num) {
         cout << "No Enough Memory in Node " << s_id << endl;
         return false;
@@ -88,7 +88,7 @@ bool NetResource::check_resource(int s_id, int d_id, int num) const {
     return true;
 }
 
-int NetResource::max_resource(int s_id, int d_id) const {
+int NetResource::max_link_resource(int s_id, int d_id) const {
     int edge_id = net_topo->get_edge(s_id, d_id)->get_edge_id();
     int max_num = get_free_edge_capacity(edge_id);
     if (net_topo->get_node(s_id)->is_user()) {
@@ -112,7 +112,7 @@ int NetResource::max_resource(int s_id, int d_id) const {
     return max_num;
 }
 
-bool NetResource::reserve_resource(int s_id, int d_id, int num) {
+bool NetResource::reserve_link_resource(int s_id, int d_id, int num) {
     if (!reserve_node_memory(s_id, num)) {
         return false;
     }
@@ -129,7 +129,7 @@ bool NetResource::reserve_resource(int s_id, int d_id, int num) {
     return true;
 }
 
-bool NetResource::release_resource(int s_id, int d_id, int num) {
+bool NetResource::release_link_resource(int s_id, int d_id, int num) {
     release_node_memory(s_id, num);
     release_node_memory(s_id, num);
     int edge_id = net_topo->get_edge(s_id, d_id)->get_edge_id();

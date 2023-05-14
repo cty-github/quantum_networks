@@ -4,8 +4,6 @@
 
 #include "qdevice.h"
 
-using namespace std;
-
 int PhotonSource::qubit_num = 0;
 
 PhotonSource::PhotonSource(int id, double pos_x, double pos_y, double decay_rate, double fidelity):

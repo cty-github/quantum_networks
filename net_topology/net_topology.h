@@ -38,6 +38,7 @@ public:
     QNode* get_node(int node_id);
     QEdge* get_edge(int node_id_a, int node_id_b);
     QEdge* get_edge(int edge_id);
+    map<int, QEdge*> get_edges();
     bool save_topo(const string& filepath) const;
     Path* get_path(int src_node_id, int dst_node_id,
                       const set<int>& closed_nodes={},

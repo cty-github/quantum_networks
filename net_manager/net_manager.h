@@ -8,6 +8,7 @@
 #include "user_service.h"
 #include "net_resource.h"
 #include "link_manager.h"
+#include "route_manager.h"
 #include "net_topology/net_topology.h"
 #include "net_topology/path.h"
 #include "qdevice/qdevice.h"
@@ -15,33 +16,6 @@
 #include <vector>
 #include <queue>
 #include <map>
-
-class RouteProject {
-private:
-    vector<LinkProject*> link_projects;
-    Path* path;
-    UserRequest* request;
-    bool success;
-public:
-    RouteProject(int rsrc_num, Path* path, UserRequest* request);
-    ~RouteProject();
-    vector<LinkProject*> get_link_projs();
-    Path* get_path();
-    UserRequest* get_request();
-    bool is_success() const;
-    void set_success();
-};
-
-class RouteManager {
-private:
-    vector<RouteProject*> route_projects;
-    LinkManager* link_manager;
-public:
-    RouteManager();
-    ~RouteManager();
-    void add_new_routing(RouteProject* new_route_proj);
-    void refresh_routing_state();
-};
 
 class NetManager {
 private:
@@ -52,7 +26,7 @@ private:
     map<int, pair<UserRequest*, int>> processing_requests;
     NetResource* net_rsrc;
     RouteManager* route_manager;
-    vector<UserConnection*> user_connections;
+    map<int, vector<UserConnection*>> user_connections;
 public:
     NetManager(NetTopology* net_topo, int user_num);
     NetManager(const string& filepath, NetTopology* net_topo);
@@ -68,9 +42,9 @@ public:
     void add_new_requests(const vector<UserRequest*>& new_requests);
     vector<RouteProject*> calculate_new_routings();
     void schedule_new_routings();
-    void refresh_routing_state();
+    void refresh_routing_state(int time);
     void check_success_project();
-    void end_user_connection();
+    void finish_user_connection(int time);
 };
 
 #endif //QUANTUM_NETWORKS_NET_MANAGER_H

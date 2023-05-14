@@ -8,54 +8,6 @@
 #include <fstream>
 #include <iostream>
 
-RouteProject::RouteProject(int rsrc_num, Path* path, UserRequest* request):
-path(path), request(request), success(false) {
-    vector<QNode*> nodes = path->get_nodes();
-    vector<QEdge*> edges = path->get_edges();
-    for (int i = 0; i < edges.size(); i++) {
-        int node_id_a = nodes[i]->get_id();
-        int node_id_b = nodes[i+1]->get_id();
-        int edge_id = edges[i]->get_edge_id();
-        auto* link_prj = new LinkProject(node_id_a, node_id_b, edge_id,
-                                         rsrc_num, request);
-        link_projects.push_back(link_prj);
-    }
-}
-
-RouteProject::~RouteProject() = default;
-
-vector<LinkProject*> RouteProject::get_link_projs() {
-    return link_projects;
-}
-
-Path* RouteProject::get_path() {
-    return path;
-}
-
-UserRequest* RouteProject::get_request() {
-    return request;
-}
-
-bool RouteProject::is_success() const {
-    return success;
-}
-
-void RouteProject::set_success() {
-    success = true;
-}
-
-RouteManager::RouteManager(): link_manager(nullptr) {}
-
-RouteManager::~RouteManager() = default;
-
-void RouteManager::add_new_routing(RouteProject* new_route_proj) {
-    route_projects.push_back(new_route_proj);
-}
-
-void RouteManager::refresh_routing_state() {
-
-}
-
 NetManager::NetManager(NetTopology* net_topo, int user_num): net_topo(net_topo) {
     double request_rate = 1.0/user_num;
     uniform_real_distribution<double> rand_double(0.0,1.0);
@@ -71,13 +23,13 @@ NetManager::NetManager(NetTopology* net_topo, int user_num): net_topo(net_topo) 
         }
     }
     net_rsrc = new NetResource(net_topo);
-    route_manager = new RouteManager();
+    route_manager = new RouteManager(net_topo);
 }
 
 NetManager::NetManager(const string& filepath, NetTopology *net_topo): net_topo(net_topo) {
     load_sd_pairs(filepath);
     net_rsrc = new NetResource(net_topo);
-    route_manager = new RouteManager();
+    route_manager = new RouteManager(net_topo);
 }
 
 NetManager::~NetManager() = default;
@@ -219,6 +171,7 @@ void NetManager::add_new_requests(const vector<UserRequest*>& new_requests) {
 }
 
 vector<RouteProject*> NetManager::calculate_new_routings() {
+    // realize for test
     vector<RouteProject*> new_route_projects;
     UserRequest* serve_request = waiting_requests.begin()->second.first;
     int pair_id = serve_request->get_pair_id();
@@ -228,7 +181,7 @@ vector<RouteProject*> NetManager::calculate_new_routings() {
     for (int i = 0; i < edges.size(); i++) {
         int node_id_a = edges[i]->get_node_id_a();
         int node_id_b = edges[i]->get_node_id_b();
-        int max_num = net_rsrc->max_resource(node_id_a, node_id_b);
+        int max_num = net_rsrc->max_link_resource(node_id_a, node_id_b);
         if (i == 0) {
             rsrc_num = max_num;
         }
@@ -236,7 +189,9 @@ vector<RouteProject*> NetManager::calculate_new_routings() {
             rsrc_num = max_num;
         }
     }
-    auto* route_prj = new RouteProject(rsrc_num, shortest_path, serve_request);
+    auto* route_prj = new RouteProject(RouteProject::get_next_id(), rsrc_num,
+                                       shortest_path, serve_request);
+    RouteProject::add_next_id();
     new_route_projects.push_back(route_prj);
     return new_route_projects;
 }
@@ -258,26 +213,52 @@ void NetManager::schedule_new_routings() {
             processing_requests[request_id].second++;
         }
         route_manager->add_new_routing(new_route_proj);
-        for (auto link_proj:new_route_proj->get_link_projs()) {
-            net_rsrc->reserve_resource(link_proj->get_s_node_id(),
-                                       link_proj->get_d_node_id(),
-                                       link_proj->get_rsrc_num());
+        for (auto it:new_route_proj->get_link_projs()) {
+            LinkProject* link_proj = it.second;
+            net_rsrc->reserve_link_resource(link_proj->get_s_node_id(),
+                                            link_proj->get_d_node_id(),
+                                            link_proj->get_rsrc_num());
         }
     }
 }
 
-void NetManager::refresh_routing_state() {
+void NetManager::refresh_routing_state(int time) {
     if (route_manager == nullptr) {
         cout << "No Route Manager" << endl;
         return;
     }
-    route_manager->refresh_routing_state();
+    route_manager->refresh_routing_state(time);
 }
 
 void NetManager::check_success_project() {
-
+    for (auto it_new_cxn:route_manager->check_success_project()) {
+        int request_id = it_new_cxn.first;
+        vector<UserConnection*>& new_cxn = it_new_cxn.second;
+        user_connections[request_id].insert(user_connections[request_id].end(),
+                                            new_cxn.begin(), new_cxn.end());
+    }
 }
 
-void NetManager::end_user_connection() {
-
+void NetManager::finish_user_connection(int time) {
+    for (auto it_user_cxn:user_connections) {
+        int request_id = it_user_cxn.first;
+        vector<UserConnection*>& user_cxns = it_user_cxn.second;
+        vector<int> expire_cxns;
+        for (int i = 0; i < user_cxns.size(); i++) {
+            user_cxns[i]->add_age(time);
+            if (user_cxns[i]->is_expired()) {
+                expire_cxns.push_back(i);
+            }
+        }
+        for (int i = (int)expire_cxns.size() - 1; i >= 0; i--) {
+            user_cxns[i]->finish_connection();
+            user_cxns.erase(user_cxns.begin() + expire_cxns[i]);
+        }
+        int expire_num = (int)expire_cxns.size();
+        int s_id = processing_requests[request_id].first->get_s_node_id();
+        int d_id = processing_requests[request_id].first->get_d_node_id();
+        net_rsrc->release_node_memory(s_id, expire_num);
+        net_rsrc->release_node_memory(d_id, expire_num);
+        processing_requests[request_id].second -= expire_num;
+    }
 }

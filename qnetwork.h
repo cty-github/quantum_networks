@@ -8,13 +8,15 @@
 #include "net_topology/net_topology.h"
 #include "qdevice/device_manager.h"
 #include "net_manager/net_manager.h"
+#include "utils/timing.h"
 #include <tuple>
 
 class QNetwork {
 private:
-    DeviceManager* device_manager{};
-    NetTopology* net_topo{};
+    DeviceManager* device_manager;
+    NetTopology* net_topo;
     NetManager* net_manager;
+    ClockTime current_time_point;
 public:
     QNetwork(int ptn_src_num, int bsm_num,
              int user_num, int repeater_num,
@@ -30,7 +32,6 @@ public:
                   const string& sd_pair_filepath) const;
     bool initialize(int k);
     bool work_cycle();
-//    EntangleConnection* generate_etg_route(Path* route);
 };
 
 #endif //QUANTUM_NETWORKS_QNETWORK_H

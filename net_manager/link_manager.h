@@ -17,41 +17,56 @@ class LinkProject {
 private:
     int s_node_id;
     int d_node_id;
-    int edge_id;
-    int rsrc_num;
-    UserRequest* request;
+    int edge_id;    // edge the link on
+    int route_id;   // route the link for
+    int rsrc_num;   // resource for the project
+    int req_num;    // link num the route need
 public:
-    LinkProject(int s_node_id, int d_node_id, int edge_id, int rsrc_num, UserRequest* request);
+    LinkProject(int s_node_id, int d_node_id, int edge_id,
+                int route_id, int rsrc_num, int req_num);
     ~LinkProject();
     int get_s_node_id() const;
     int get_d_node_id() const;
     int get_edge_id() const;
+    int get_route_id() const;
     int get_rsrc_num() const;
-    UserRequest* get_request() const;
+    int get_req_num() const;
 };
 
-class LinkGenerator {
+class LinkGenerator {   // public among all route projects
 private:
     int edge_id;
+    int node_id_a;
+    int node_id_b;
+    double success_rate;
+    PhotonSource* ptn_src;
     int total_rsrc_num;
-    queue<LinkProject*> request_projects;
+    queue<pair<int, int>> route_requests; // queue of request route id and request num
 public:
-    explicit LinkGenerator(int edge_id);
+    LinkGenerator(int edge_id, int node_id_a, int node_id_b, double success_rate, PhotonSource* ptn_src);
     ~LinkGenerator();
+    void add_rsrc_num(int new_rsrc_num);
+    void add_req_route(int route_id, int req_num);
+    EntangleLink* try_generate_link() const;
+    vector<EntangleLink*> generate_links(int time) const;
+    map<int, vector<EntangleLink*>> serve_requests(vector<EntangleLink*> new_links);
 };
 
-class LinkManager {
+class LinkManager { // for each route project to manage its links
 private:
-    map<int, LinkGenerator*> link_generators;
-    vector<EntangleLink*> etg_link_pool;
-    NetTopology* net_topo;
+    map<int, LinkProject*> link_projects;   // map between edge id and link proj on it
+    map<int, vector<EntangleLink*>> etg_links;  // map between edge id and links on it
+    map<int, EntangleLink*> purified_links;  // map between edge id and usable link on it
+    map<pair<int, int>, EntangleSegment*> etg_segments;
 public:
-    explicit LinkManager(NetTopology* net_topo);
+    explicit LinkManager(map<int, LinkProject*>& link_projects);
     ~LinkManager();
-    EntangleLink* try_generate_link(int node_id_a, int node_id_b) const;
-    EntangleLink* try_connect_link(EntangleLink* src_link, EntangleLink* dst_link) const;
-    vector<EntangleLink*> generate_links(Path* path) const;
-    EntangleConnection* connect_links(const vector<EntangleLink*>& links, Path* path);
+    void add_links(int edge_id, vector<EntangleLink*>& links);
+    map<int, int> update_links(int time);
+    void purify_available_links();
+    void swap_all_connected(Path* path);
+    bool check_user_connection(int s_id, int d_id);
+    EntangleConnection* generate_connection(int s_id, int d_id);
 };
 
 #endif //QUANTUM_NETWORKS_LINK_MANAGER_H

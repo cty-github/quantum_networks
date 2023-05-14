@@ -6,55 +6,60 @@
 #define QUANTUM_NETWORKS_ENTANGLE_LEVEL_H
 
 //#include "qelement.h"
+#include "entangle_params.h"
 #include "net_topology/net_topology.h"
 #include "net_topology/path.h"
 
 class EntangleLink {
 private:
-    int src_node_id;
-    int dst_node_id;
+    int node_id_a;
+    int node_id_b;
     double x_fidelity;
     double z_fidelity;
+    int age;
 public:
-    EntangleLink(int src_node_id, int dst_node_id,
-                 double src_bit_flip, double dst_bit_flip,
-                 double src_phase_flip, double dst_phase_flip);
-    EntangleLink(int src_node_id, int dst_node_id,
-                 double x_fidelity, double z_fidelity);
+//    EntangleLink(int node_id_a, int node_id_b,
+//                 double src_bit_flip, double dst_bit_flip,
+//                 double src_phase_flip, double dst_phase_flip);
+    EntangleLink(int node_id_a, int node_id_b, double x_fidelity, double z_fidelity);
     ~EntangleLink();
-    int get_src_id() const;
-    int get_dst_id() const;
+    int get_node_id_a() const;
+    int get_node_id_b() const;
     double get_x_fidelity() const;
     double get_z_fidelity() const;
     double get_fidelity() const;
+    int get_age() const;
+    void add_age(int time);
+    bool is_expired() const;
+    friend EntangleLink* purify_links(vector<EntangleLink*> links);
+    friend EntangleLink* swap_link(EntangleLink* prev_link, EntangleLink* next_link, QNode* node);
 };
 
 class EntangleSegment {
 private:
-    EntangleLink* etg_link{};
-    Path* path{};
-    NetTopology* net_topo{};
+    EntangleLink* etg_link;
     int s_id;
     int d_id;
 public:
-    EntangleSegment();
+    EntangleSegment(EntangleLink* etg_link, int s_id, int d_id);
+    explicit EntangleSegment(EntangleSegment* etg_seg);
     ~EntangleSegment();
+    EntangleLink* get_etg_link() const;
+    int get_s_id() const;
+    int get_d_id() const;
+    double get_x_fidelity() const;
+    double get_z_fidelity() const;
+    double get_fidelity() const;
+    int get_age() const;
+    void add_age(int time);
+    bool is_expired() const;
 };
 
-class EntangleConnection {
-private:
-    EntangleLink* etg_link{};
-    Path* path{};
-    NetTopology* net_topo{};
-    int s_id;
-    int d_id;
+class EntangleConnection: public EntangleSegment{
 public:
-    EntangleConnection(EntangleLink* etg_link, Path* path, NetTopology* net_topo);
+    explicit EntangleConnection(EntangleSegment* etg_seg);
     ~EntangleConnection();
-    EntangleLink* get_etg_link() const;
-    void print_etg_link() const;
-    Path* get_path() const;
-    NetTopology* get_net_topo() const;
+    void print_etg_cxn() const;
 };
 
 #endif //QUANTUM_NETWORKS_ENTANGLE_LEVEL_H
