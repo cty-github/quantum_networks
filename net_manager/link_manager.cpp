@@ -140,7 +140,7 @@ void LinkManager::add_links(int edge_id, vector<EntangleLink*>& links) {
     etg_links[edge_id].insert(etg_links[edge_id].end(), links.begin(), links.end());
 }
 
-map<int, int> LinkManager::update_links(int time) { // return num of expire links on each edge
+map<int, int> LinkManager::update_entangles(int time) { // return num of expire links on each edge
     map<int, int> edge_expire_num;
     for (auto& it_etg:etg_links) {
         int edge_id = it_etg.first;

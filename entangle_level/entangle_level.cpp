@@ -16,6 +16,9 @@
 EntangleLink::EntangleLink(int node_id_a, int node_id_b, double x_fidelity, double z_fidelity):
 node_id_a(node_id_a), node_id_b(node_id_b), x_fidelity(x_fidelity), z_fidelity(z_fidelity), age(0) {}
 
+EntangleLink::EntangleLink(int node_id_a, int node_id_b, double x_fidelity, double z_fidelity, int age):
+node_id_a(node_id_a), node_id_b(node_id_b), x_fidelity(x_fidelity), z_fidelity(z_fidelity), age(age) {}
+
 EntangleLink::~EntangleLink() = default;
 
 int EntangleLink::get_node_id_a() const {
@@ -85,7 +88,8 @@ EntangleLink* swap_link(EntangleLink* prev_link, EntangleLink* next_link, QNode*
     double next_z_f = next_link->get_z_fidelity();
     double z_fidelity = prev_z_f * next_z_f + (1-prev_z_f) * (1-next_z_f);
     z_fidelity = z_fidelity * bsm->get_z_fidelity() + (1-z_fidelity) * (1-bsm->get_z_fidelity());
-    auto* new_link = new EntangleLink(node_id_a, node_id_b, x_fidelity, z_fidelity);
+    int age = max(prev_link->get_age(), next_link->get_age());
+    auto* new_link = new EntangleLink(node_id_a, node_id_b, x_fidelity, z_fidelity, age);
     delete prev_link;
     delete next_link;
     return new_link;

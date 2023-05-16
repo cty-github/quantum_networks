@@ -66,7 +66,7 @@ public:
     ~LinkManager();
     void print_links() const;
     void add_links(int edge_id, vector<EntangleLink*>& links);
-    map<int, int> update_links(int time);
+    map<int, int> update_entangles(int time);
     void purify_available_links(Path* path);
     void swap_all_connected(Path* path);
     bool check_user_connection(int s_id, int d_id);

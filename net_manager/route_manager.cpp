@@ -47,8 +47,8 @@ void RouteProject::add_links(int edge_id, vector<EntangleLink*> links) {
     link_manager->add_links(edge_id, links);
 }
 
-map<int, int> RouteProject::update_links(int time) {
-    return link_manager->update_links(time);
+map<int, int> RouteProject::update_entangles(int time) {
+    return link_manager->update_entangles(time);
 }
 
 void RouteProject::purify_available_links() {
@@ -138,7 +138,7 @@ void RouteManager::refresh_routing_state(int time) {
     for (auto it_route_proj:route_projects) {
         int route_id = it_route_proj.first;
         RouteProject* route_proj = it_route_proj.second;
-        map<int, int> edge_expire_num = route_proj->update_links(time);
+        map<int, int> edge_expire_num = route_proj->update_entangles(time);
         for (auto it_edge_expire:edge_expire_num) {
             int edge_id = it_edge_expire.first;
             int expire_num = it_edge_expire.second;

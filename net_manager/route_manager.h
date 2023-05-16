@@ -34,7 +34,7 @@ public:
     Path* get_path();
     UserRequest* get_request();
     void add_links(int edge_id, vector<EntangleLink*> links);
-    map<int, int> update_links(int time);
+    map<int, int> update_entangles(int time);
     void purify_available_links();
     void swap_all_connected();
     bool check_user_connection();

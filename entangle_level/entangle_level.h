@@ -22,6 +22,7 @@ public:
 //                 double src_bit_flip, double dst_bit_flip,
 //                 double src_phase_flip, double dst_phase_flip);
     EntangleLink(int node_id_a, int node_id_b, double x_fidelity, double z_fidelity);
+    EntangleLink(int node_id_a, int node_id_b, double x_fidelity, double z_fidelity, int age);
     ~EntangleLink();
     int get_node_id_a() const;
     int get_node_id_b() const;
