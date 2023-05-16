@@ -16,11 +16,13 @@ int main() {
 //                      proj_path+"data/sd_pair_example.txt");
 
     qnetwork.initialize(3);
-    int cycle_num = 5;
-    while(cycle_num > 0) {
-        qnetwork.work_cycle();
-        cycle_num--;
-    }
+
+//    int cycle_num = 10;
+//    while(cycle_num > 0) {
+//        qnetwork.work_cycle();
+//        cycle_num--;
+//    }
+    while (qnetwork.work_cycle()) {}
 
     return 0;
 }

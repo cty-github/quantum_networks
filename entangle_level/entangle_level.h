@@ -40,8 +40,9 @@ private:
     EntangleLink* etg_link;
     int s_id;
     int d_id;
+    Path* path;
 public:
-    EntangleSegment(EntangleLink* etg_link, int s_id, int d_id);
+    EntangleSegment(EntangleLink* etg_link, int s_id, int d_id, Path* path);
     explicit EntangleSegment(EntangleSegment* etg_seg);
     ~EntangleSegment();
     EntangleLink* get_etg_link() const;
@@ -53,6 +54,7 @@ public:
     int get_age() const;
     void add_age(int time);
     bool is_expired() const;
+    Path* get_path() const;
 };
 
 class EntangleConnection: public EntangleSegment{

@@ -41,11 +41,15 @@ private:
     double success_rate;
     PhotonSource* ptn_src;
     int total_rsrc_num;
+    int total_req_num;
     queue<pair<int, int>> route_requests; // queue of request route id and request num
 public:
     LinkGenerator(int edge_id, int node_id_a, int node_id_b, double success_rate, PhotonSource* ptn_src);
     ~LinkGenerator();
+    int get_total_rsrc_num() const;
+    int get_total_req_num() const;
     void add_rsrc_num(int new_rsrc_num);
+    void sub_rsrc_num(int old_rsrc_num);
     void add_req_route(int route_id, int req_num);
     EntangleLink* try_generate_link() const;
     vector<EntangleLink*> generate_links(int time) const;
@@ -56,14 +60,14 @@ class LinkManager { // for each route project to manage its links
 private:
     map<int, LinkProject*> link_projects;   // map between edge id and link proj on it
     map<int, vector<EntangleLink*>> etg_links;  // map between edge id and links on it
-    map<int, EntangleLink*> purified_links;  // map between edge id and usable link on it
     map<pair<int, int>, EntangleSegment*> etg_segments;
 public:
     explicit LinkManager(map<int, LinkProject*>& link_projects);
     ~LinkManager();
+    void print_links() const;
     void add_links(int edge_id, vector<EntangleLink*>& links);
     map<int, int> update_links(int time);
-    void purify_available_links();
+    void purify_available_links(Path* path);
     void swap_all_connected(Path* path);
     bool check_user_connection(int s_id, int d_id);
     EntangleConnection* generate_connection(int s_id, int d_id);

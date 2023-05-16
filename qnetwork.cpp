@@ -88,11 +88,12 @@ bool QNetwork::initialize(int k) {
         cout << "No Net Topology" << endl;
         return false;
     }
+
+    cout << "--------------------------" << endl;
     cout << "PtnSrc request_num: " << device_manager->get_ptn_src_num() << endl;
     cout << "BSM request_num: " << device_manager->get_bsm_num() << endl;
     cout << "Node request_num: " << net_topo->get_node_num() << endl;
     cout << "Edge request_num: " << net_topo->get_edge_num() << endl;
-    cout << endl;
 
     bool initialize_res = net_manager->initialize(k);
     ClockTime last_time_point = current_time_point;
@@ -108,17 +109,22 @@ bool QNetwork::work_cycle() {
     current_time_point = get_current_time();
     int time_interval = get_time_interval(current_time_point, last_time_point);
 
-    cout << "Work Cycle" << endl;
-    cout << "Duration: " << time_interval << endl;
-    cout << "---------------------------" << endl;
-
+    cout << "--------------------------" << endl;
+    cout << "Work Cycle Duration: " << time_interval << endl;
+    cout << "----- Requests Phase -----" << endl;
     net_manager->add_new_requests(net_manager->random_request(0.4, 0.2));
     net_manager->print_waiting_requests();
+    cout << "----- Routings Phase -----" << endl;
     net_manager->schedule_new_routings();
-    net_manager->print_processing_requests();
-
+    net_manager->print_routing_projects();
     net_manager->refresh_routing_state(time_interval);
-    net_manager->check_success_project();
+    net_manager->print_processing_requests();
+    cout << "----- Services Phase -----" << endl;
+    net_manager->check_success_routing();
+    net_manager->print_serving_requests();
+    net_manager->print_user_connections();
     net_manager->finish_user_connection(time_interval);
+    cout << endl;
+
     return true;
 }

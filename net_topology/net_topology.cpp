@@ -99,8 +99,6 @@ NetTopology::NetTopology(const string& filepath, DeviceManager* dev_mgr): node_n
             double ptn_y = ptn_src->get_pos_y();
             double p_a = exp(-ptn_src->get_decay_rate()*dist(a_x, a_y, ptn_x, ptn_y));
             double p_b = exp(-ptn_src->get_decay_rate()*dist(b_x, b_y, ptn_x, ptn_y));
-            double x_fidelity = p_a * p_b + (1-p_a) * (1-p_b);
-            double z_fidelity = p_a * p_b + (1-p_a) * (1-p_b);
             double success_rate = p_a * p_b;
             add_edge(edge_id, node_id_a, node_id_b,
                      capacity, get_distance(node_id_a, node_id_b),

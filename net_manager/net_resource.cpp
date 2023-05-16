@@ -41,6 +41,7 @@ bool NetResource::reserve_node_memory(int node_id, int num) {
         return false;
     }
     free_node_memory[node_id] -= num;
+//    cout << "Reserve " << num << " Memory in Node " << node_id << endl;
     return true;
 }
 
@@ -50,6 +51,7 @@ bool NetResource::reserve_edge_capacity(int edge_id, int num) {
         return false;
     }
     free_edge_capacity[edge_id] -= num;
+//    cout << "Reserve " << num << " Capacity in Edge " << edge_id << endl;
     return true;
 }
 
@@ -59,6 +61,7 @@ bool NetResource::release_node_memory(int node_id, int num) {
         return false;
     }
     free_node_memory[node_id] += num;
+//    cout << "Release " << num << " Memory in Node " << node_id << endl;
     return true;
 }
 
@@ -68,6 +71,7 @@ bool NetResource::release_edge_capacity(int edge_id, int num) {
         return false;
     }
     free_edge_capacity[edge_id] += num;
+//    cout << "Release " << num << " Capacity in Edge " << edge_id << endl;
     return true;
 }
 
@@ -130,9 +134,18 @@ bool NetResource::reserve_link_resource(int s_id, int d_id, int num) {
 }
 
 bool NetResource::release_link_resource(int s_id, int d_id, int num) {
-    release_node_memory(s_id, num);
-    release_node_memory(s_id, num);
+    if (!release_node_memory(s_id, num)) {
+        return false;
+    }
+    if (!release_node_memory(d_id, num)) {
+        reserve_node_memory(s_id, num);
+        return false;
+    }
     int edge_id = net_topo->get_edge(s_id, d_id)->get_edge_id();
-    release_edge_capacity(edge_id, num);
+    if (!release_edge_capacity(edge_id, num)) {
+        reserve_node_memory(s_id, num);
+        reserve_node_memory(d_id, num);
+        return false;
+    }
     return true;
 }

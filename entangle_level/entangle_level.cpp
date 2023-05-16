@@ -51,6 +51,9 @@ bool EntangleLink::is_expired() const {
 }
 
 EntangleLink* purify_links(vector<EntangleLink*> links) {
+    for (int i = 1; i < links.size(); i++) {
+        delete links[i];
+    }
     return links.front();
 }
 
@@ -88,11 +91,11 @@ EntangleLink* swap_link(EntangleLink* prev_link, EntangleLink* next_link, QNode*
     return new_link;
 }
 
-EntangleSegment::EntangleSegment(EntangleLink* etg_link, int s_id, int d_id):
-etg_link(etg_link), s_id(s_id), d_id(d_id) {}
+EntangleSegment::EntangleSegment(EntangleLink* etg_link, int s_id, int d_id, Path* path):
+etg_link(etg_link), s_id(s_id), d_id(d_id), path(path) {}
 
-EntangleSegment::EntangleSegment(EntangleSegment *etg_seg):
-etg_link(etg_seg->etg_link), s_id(etg_seg->s_id), d_id(etg_seg->d_id) {}
+EntangleSegment::EntangleSegment(EntangleSegment* etg_seg):
+etg_link(etg_seg->etg_link), s_id(etg_seg->s_id), d_id(etg_seg->d_id), path(etg_seg->path) {}
 
 EntangleSegment::~EntangleSegment() = default;
 
@@ -130,6 +133,10 @@ void EntangleSegment::add_age(int time) {
 
 bool EntangleSegment::is_expired() const {
     return etg_link->is_expired();
+}
+
+Path* EntangleSegment::get_path() const {
+    return path;
 }
 
 EntangleConnection::EntangleConnection(EntangleSegment* etg_seg): EntangleSegment(etg_seg) {}

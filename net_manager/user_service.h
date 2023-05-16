@@ -52,10 +52,12 @@ public:
 class UserConnection {
 private:
     EntangleConnection* etg_cxn;
+    int connection_id;
     int request_id;
     bool finished;
+    static int next_id;
 public:
-    UserConnection(EntangleConnection* etg_cxn, int request_id);
+    UserConnection(EntangleConnection* etg_cxn, int connection_id, int request_id);
     ~UserConnection();
     int get_s_node_id() const;
     int get_d_node_id() const;
@@ -63,8 +65,11 @@ public:
     int get_age() const;
     void add_age(int time);
     bool is_expired() const;
+    int get_connection_id() const;
     int get_request_id() const;
     bool is_finished() const;
+    static int get_next_id();
+    static void add_next_id();
     void finish_connection();
 };
 

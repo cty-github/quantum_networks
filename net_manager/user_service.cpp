@@ -80,11 +80,13 @@ void UserRequest::add_next_id() {
 }
 
 void UserRequest::print_request() const {
-    cout << s_node_id << "->" << d_node_id << ": " << fide_th;
+    cout << "Request " << request_id << ": SD " << s_node_id << "->" << d_node_id << " Fide " << fide_th;
 }
 
-UserConnection::UserConnection(EntangleConnection* etg_cxn, int request_id):
-etg_cxn(etg_cxn), request_id(request_id), finished(false) {}
+int UserConnection::next_id = 0;
+
+UserConnection::UserConnection(EntangleConnection* etg_cxn, int connection_id, int request_id):
+etg_cxn(etg_cxn), connection_id(connection_id), request_id(request_id), finished(false) {}
 
 UserConnection::~UserConnection() = default;
 
@@ -112,6 +114,10 @@ bool UserConnection::is_expired() const {
     return etg_cxn->is_expired();
 }
 
+int UserConnection::get_connection_id() const {
+    return connection_id;
+}
+
 int UserConnection::get_request_id() const {
     return request_id;
 }
@@ -120,9 +126,16 @@ bool UserConnection::is_finished() const {
     return finished;
 }
 
+int UserConnection::get_next_id() {
+    return next_id;
+}
+
+void UserConnection::add_next_id() {
+    next_id++;
+}
+
 void UserConnection::finish_connection() {
     finished = true;
-    cout << "Finish Connection of User Request " << request_id << endl;
-    etg_cxn->print_etg_cxn();
-    cout << endl;
+    cout << "Finish Connection " << connection_id << " of Request " << request_id << endl;
+    delete etg_cxn;
 }

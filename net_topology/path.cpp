@@ -92,7 +92,7 @@ void Path::append_node(QNode* new_node, QEdge* new_edge, double new_cost) {
 }
 
 void Path::print_path() const {
-    cout << "Path: " ;
+    cout << "Path " ;
     for (int i = 0; i < nodes.size(); i++) {
         if (i == 0) {
             cout << nodes[i]->get_id();
@@ -104,8 +104,7 @@ void Path::print_path() const {
     for (auto edge : edges) {
         cout << edge->get_edge_id() << "|";
     }
-    cout << endl;
-//    cout << "Fidelity: " << cost << endl;
+//    cout << "Fidelity " << cost << endl;
 }
 
 void Path::insert_path(Path* precede_path) {

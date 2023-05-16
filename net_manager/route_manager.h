@@ -42,6 +42,8 @@ public:
     bool is_success() const;
     void set_success(EntangleConnection* etg_cxn);
     UserConnection* get_user_cxn() const;
+    void print_route_proj() const;
+    void print_links() const;
     static int get_next_id();
     static void add_next_id();
 };
@@ -53,9 +55,10 @@ private:
 public:
     explicit RouteManager(NetTopology* net_topo);
     ~RouteManager();
+    void print_routing_projects() const;
     void add_new_routing(RouteProject* new_route_proj);
     void refresh_routing_state(int time);
-    map<int, vector<UserConnection*>> check_success_project();
+    map<int, vector<UserConnection*>> check_success_routing(NetResource* net_rsrc);
 };
 
 #endif //QUANTUM_NETWORKS_ROUTE_MANAGER_H

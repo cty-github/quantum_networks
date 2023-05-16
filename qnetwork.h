@@ -21,7 +21,7 @@ public:
     QNetwork(int ptn_src_num, int bsm_num,
              int user_num, int repeater_num,
              double size=10000, double alpha=0.5, double beta=0.9,
-             double decay_rate=0.0002, double z_fidelity=0.999, double x_fidelity=0.999);
+             double decay_rate=0.0015, double z_fidelity=0.999, double x_fidelity=0.999);
     QNetwork(const string& net_dev_filepath, const string& net_topo_filepath, const string& sd_pair_filepath);
     ~QNetwork();
     int get_node_num() const;
