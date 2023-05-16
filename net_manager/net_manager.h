@@ -22,6 +22,7 @@ private:
     NetTopology* net_topo;
     map<int, SDPair*> sd_pairs;
     map<int, vector<Path*>> candidate_paths;
+    map<int, UserRequest*> user_requests;
     map<int, pair<UserRequest*, int>> waiting_requests;
     map<int, pair<UserRequest*, int>> processing_requests;
     map<int, pair<UserRequest*, int>> serving_requests;
@@ -48,8 +49,8 @@ public:
     vector<RouteProject*> calculate_new_routings();
     void schedule_new_routings();
     void refresh_routing_state(int time);
-    void check_success_routing();
-    void finish_user_connection(int time);
+    bool check_success_routing(const string& output_filepath);
+    int finish_user_connection(int time);
 };
 
 #endif //QUANTUM_NETWORKS_NET_MANAGER_H

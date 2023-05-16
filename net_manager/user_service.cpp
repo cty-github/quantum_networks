@@ -43,7 +43,10 @@ UserRequest::UserRequest(int request_id, int pair_id,
                          double fide_th, int request_num):
 request_id(request_id), pair_id(pair_id),
 s_node_id(s_node_id), d_node_id(d_node_id),
-fide_th(fide_th), request_num(request_num) {}
+fide_th(fide_th), request_num(request_num),
+processed_num(0), served_num(0),
+start_time(get_current_time()),
+finished(false), end(false) {}
 
 UserRequest::~UserRequest() = default;
 
@@ -71,6 +74,33 @@ int UserRequest::get_request_num() const {
     return request_num;
 }
 
+void UserRequest::add_processed_num(int num) {
+    processed_num += num;
+    if (processed_num == request_num) {
+        finished = true;
+        finish_time = get_current_time();
+    }
+}
+
+void UserRequest::add_served_num(int num) {
+    served_num += num;
+    if (served_num == request_num) {
+        end = true;
+    }
+}
+
+ClockTime UserRequest::get_start_time() const {
+    return start_time;
+}
+
+bool UserRequest::is_finished() const {
+    return finished;
+}
+
+bool UserRequest::has_end() const {
+    return end;
+}
+
 int UserRequest::get_next_id() {
     return next_id;
 }
@@ -86,7 +116,8 @@ void UserRequest::print_request() const {
 int UserConnection::next_id = 0;
 
 UserConnection::UserConnection(EntangleConnection* etg_cxn, int connection_id, int request_id):
-etg_cxn(etg_cxn), connection_id(connection_id), request_id(request_id), finished(false) {}
+etg_cxn(etg_cxn), connection_id(connection_id), request_id(request_id),
+created_time(get_current_time()), finished(false) {}
 
 UserConnection::~UserConnection() = default;
 
@@ -120,6 +151,10 @@ int UserConnection::get_connection_id() const {
 
 int UserConnection::get_request_id() const {
     return request_id;
+}
+
+ClockTime UserConnection::get_created_time() const {
+    return created_time;
 }
 
 bool UserConnection::is_finished() const {

@@ -5,41 +5,28 @@
 #include "qnetwork.h"
 #include "utils/rand.h"
 #include <iostream>
+#include <fstream>
+#include <utility>
 
-QNetwork::QNetwork(int ptn_src_num, int bsm_num,
-                   int user_num, int repeater_num,
-                   double size, double alpha, double beta,
-                   double decay_rate, double z_fidelity, double x_fidelity) {
+QNetwork::QNetwork(int ptn_src_num, int bsm_num, int user_num, int repeater_num, string output_filepath,
+                   double size, double alpha, double beta, double decay_rate, double z_fidelity, double x_fidelity)
+: start_time_point(get_current_time()), current_time_point(get_current_time()),
+finished_cxn_num(0), output_filepath(std::move(output_filepath)) {
     device_manager = new DeviceManager(ptn_src_num, bsm_num, size, decay_rate, z_fidelity, x_fidelity);
     net_topo = new NetTopology(device_manager, user_num, repeater_num, size, alpha, beta);
     net_manager = new NetManager(net_topo, user_num);
-    current_time_point = get_current_time();
 }
 
-QNetwork::QNetwork(const string& net_dev_filepath, const string& net_topo_filepath, const string& sd_pair_filepath) {
+QNetwork::QNetwork(const string& net_dev_filepath, const string& net_topo_filepath,
+                   const string& sd_pair_filepath, string output_filepath)
+: start_time_point(get_current_time()), current_time_point(get_current_time()),
+finished_cxn_num(0), output_filepath(std::move(output_filepath)) {
     device_manager = new DeviceManager(net_dev_filepath);
     net_topo = new NetTopology(net_topo_filepath, device_manager);
     net_manager = new NetManager(sd_pair_filepath, net_topo);
-    current_time_point = get_current_time();
 }
 
 QNetwork::~QNetwork() = default;
-
-int QNetwork::get_node_num() const {
-    if (net_topo == nullptr) {
-        cout << "No Net Topology" << endl;
-        return 0;
-    }
-    return net_topo->get_node_num();
-}
-
-int QNetwork::get_edge_num() const {
-    if (net_topo == nullptr) {
-        cout << "No Net Topology" << endl;
-        return 0;
-    }
-    return net_topo->get_edge_num();
-}
 
 //bool QNetwork::draw_net_topo(const string& filepath) const {
 //    if (net_topo == nullptr) {
@@ -89,6 +76,15 @@ bool QNetwork::initialize(int k) {
         return false;
     }
 
+    ofstream file;
+    file.open(output_filepath,ios::out);
+    if (!file.is_open()) {
+        cout << "Cannot Open File " << output_filepath << endl;
+        return false;
+    }
+    file << "#\t\treq_id\tcxn_id\ttask_cpl_time" << endl;
+    file.close();
+
     cout << "--------------------------" << endl;
     cout << "PtnSrc request_num: " << device_manager->get_ptn_src_num() << endl;
     cout << "BSM request_num: " << device_manager->get_bsm_num() << endl;
@@ -104,7 +100,7 @@ bool QNetwork::initialize(int k) {
     return initialize_res;
 }
 
-bool QNetwork::work_cycle() {
+bool QNetwork::work_cycle(double run_time) {
     ClockTime last_time_point = current_time_point;
     current_time_point = get_current_time();
     int time_interval = get_time_interval(current_time_point, last_time_point);
@@ -120,11 +116,19 @@ bool QNetwork::work_cycle() {
     net_manager->refresh_routing_state(time_interval);
     net_manager->print_processing_requests();
     cout << "----- Services Phase -----" << endl;
-    net_manager->check_success_routing();
+    net_manager->check_success_routing(output_filepath);
     net_manager->print_serving_requests();
     net_manager->print_user_connections();
-    net_manager->finish_user_connection(time_interval);
+    finished_cxn_num += net_manager->finish_user_connection(time_interval);
     cout << endl;
 
-    return true;
+    if (get_time_second(current_time_point, start_time_point) > run_time) {
+        return false;
+    } else {
+        return true;
+    }
+}
+
+int QNetwork::get_finished_cxn_num() const {
+    return finished_cxn_num;
 }

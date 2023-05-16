@@ -187,6 +187,7 @@ vector<UserRequest*> NetManager::random_request(double sd_prob, double req_rate)
 
 void NetManager::add_new_requests(const vector<UserRequest*>& new_requests) {
     for (auto request:new_requests) {
+        user_requests[request->get_request_id()] = request;
         waiting_requests[request->get_request_id()] = {request, request->get_request_num()};
     }
 }
@@ -284,14 +285,28 @@ void NetManager::refresh_routing_state(int time) {
     route_manager->refresh_routing_state(time);
 }
 
-void NetManager::check_success_routing() {
+bool NetManager::check_success_routing(const string& output_filepath) {
     cout << "- Finish Routings" << endl;
+    ofstream file;
+    file.open(output_filepath,ios::app);
+    if (!file.is_open()) {
+        cout << "Cannot Open File " << output_filepath << endl;
+        return false;
+    }
     for (auto it_new_cxn: route_manager->check_success_routing(net_rsrc)) {
         int request_id = it_new_cxn.first;
         vector<UserConnection*>& new_cxn = it_new_cxn.second;
+        for (auto cxn:new_cxn) {
+            double task_completion_time = get_time_second(cxn->get_created_time(),
+                                                          user_requests[request_id]->get_start_time());
+            file << "TaskCpl" << "\t";
+            file << request_id << "\t\t";
+            file << cxn->get_connection_id() << "\t\t";
+            file << task_completion_time << endl;
+        }
         user_connections[request_id].insert(user_connections[request_id].end(),
                                             new_cxn.begin(), new_cxn.end());
-        UserRequest* request = processing_requests[request_id].first;
+        UserRequest* request = user_requests[request_id];
         int processing_num = processing_requests[request_id].second;
         int success_num = (int)new_cxn.size();
         if (processing_num == success_num) {
@@ -299,17 +314,21 @@ void NetManager::check_success_routing() {
         } else {
             processing_requests[request_id].second -= success_num;
         }
+        user_requests[request_id]->add_processed_num(success_num);
         if (serving_requests.find(request_id) == serving_requests.end()) {
             serving_requests[request_id] = {request, success_num};
         } else {
             serving_requests[request_id].second += success_num;
         }
     }
+    file.close();
+    return true;
 }
 
-void NetManager::finish_user_connection(int time) {
+int NetManager::finish_user_connection(int time) {
     cout << "- Finish Connections" << endl;
     vector<int> all_expire_request;
+    int finish_cxn_num = 0;
     for (auto& it_user_cxn:user_connections) {
         int request_id = it_user_cxn.first;
         vector<UserConnection*>& user_cxns = it_user_cxn.second;
@@ -326,6 +345,7 @@ void NetManager::finish_user_connection(int time) {
             user_cxns.erase(user_cxns.begin() + expire_cxns[i]);
         }
         int expire_num = (int)expire_cxns.size();
+        finish_cxn_num += expire_num;
         int s_id = serving_requests[request_id].first->get_s_node_id();
         int d_id = serving_requests[request_id].first->get_d_node_id();
         net_rsrc->release_node_memory(s_id, expire_num);
@@ -335,8 +355,14 @@ void NetManager::finish_user_connection(int time) {
             serving_requests.erase(request_id);
             all_expire_request.push_back(request_id);
         }
+        user_requests[request_id]->add_served_num(expire_num);
+        if (user_requests[request_id]->has_end()) {
+            delete user_requests[request_id];
+            user_requests.erase(request_id);
+        }
     }
     for (auto request_id:all_expire_request) {
         user_connections.erase(request_id);
     }
+    return finish_cxn_num;
 }
