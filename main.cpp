@@ -1,6 +1,7 @@
 #include <iostream>
 #include <dirent.h>
 #include "qnetwork.h"
+#include "test_params.h"
 
 using namespace std;
 
@@ -17,17 +18,17 @@ int main() {
     // test network
     string test_path = proj_path+"data/test/"+current_time_stamp+"/";
     mkdir(test_path.c_str());
-    QNetwork qnetwork = QNetwork(10, 10, 10, 20,
+    QNetwork qnetwork = QNetwork(PTNSRC_NUM, BSM_NUM,
+                                 USER_NUM, REPEATER_NUM,
+                                 NET_SIZE, ALPHA, BETA,
                                  test_path+"output_"+current_time_stamp+".txt");
     qnetwork.save_net(test_path+"net_dev_"+current_time_stamp+".txt",
                       test_path+"net_topo_"+current_time_stamp+".txt",
                       test_path+"sd_pair_"+current_time_stamp+".txt");
 
-    qnetwork.initialize(3);
-    while (qnetwork.work_cycle(5)) {}
-
-    cout << "--------------------------" << endl;
-    cout << "Finished Connection Num: " << qnetwork.get_finished_cxn_num() << endl;
+    qnetwork.initialize(CANDIDATE_NUM);
+    while (qnetwork.work_cycle(RUN_TIME)) {}
+    qnetwork.finish();
 
     return 0;
 }

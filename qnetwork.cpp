@@ -3,23 +3,24 @@
 //
 
 #include "qnetwork.h"
+#include "test_params.h"
 #include "utils/rand.h"
 #include <iostream>
 #include <fstream>
 #include <utility>
 
-QNetwork::QNetwork(int ptn_src_num, int bsm_num, int user_num, int repeater_num, string output_filepath,
-                   double size, double alpha, double beta, double decay_rate, double z_fidelity, double x_fidelity)
-: start_time_point(get_current_time()), current_time_point(get_current_time()),
+QNetwork::QNetwork(int ptn_src_num, int bsm_num, int user_num, int repeater_num,
+                   double size, double alpha, double beta, string output_filepath):
+start_time_point(get_current_time()), current_time_point(get_current_time()),
 finished_cxn_num(0), output_filepath(std::move(output_filepath)) {
-    device_manager = new DeviceManager(ptn_src_num, bsm_num, size, decay_rate, z_fidelity, x_fidelity);
+    device_manager = new DeviceManager(ptn_src_num, bsm_num, size);
     net_topo = new NetTopology(device_manager, user_num, repeater_num, size, alpha, beta);
     net_manager = new NetManager(net_topo, user_num);
 }
 
 QNetwork::QNetwork(const string& net_dev_filepath, const string& net_topo_filepath,
-                   const string& sd_pair_filepath, string output_filepath)
-: start_time_point(get_current_time()), current_time_point(get_current_time()),
+                   const string& sd_pair_filepath, string output_filepath):
+start_time_point(get_current_time()), current_time_point(get_current_time()),
 finished_cxn_num(0), output_filepath(std::move(output_filepath)) {
     device_manager = new DeviceManager(net_dev_filepath);
     net_topo = new NetTopology(net_topo_filepath, device_manager);
@@ -108,7 +109,9 @@ bool QNetwork::work_cycle(double run_time) {
     cout << "--------------------------" << endl;
     cout << "Work Cycle Duration: " << time_interval << endl;
     cout << "----- Requests Phase -----" << endl;
-    net_manager->add_new_requests(net_manager->random_request(0.05, 0.2));
+    vector<UserRequest*> new_requests = net_manager->random_request(time_interval, TIME_PROB,
+                                                                    SD_PROB, REQ_RATE);
+    net_manager->add_new_requests(new_requests);
     net_manager->print_waiting_requests();
     cout << "----- Routings Phase -----" << endl;
     net_manager->schedule_new_routings();
@@ -131,4 +134,28 @@ bool QNetwork::work_cycle(double run_time) {
 
 int QNetwork::get_finished_cxn_num() const {
     return finished_cxn_num;
+}
+
+bool QNetwork::finish() {
+    cout << "--------------------------" << endl;
+    cout << "Finished Connection Num: " << get_finished_cxn_num() << endl;
+    cout << "Waiting Request NUM: " << net_manager->get_waiting_request_num() << endl;
+
+    ofstream file;
+    file.open(output_filepath,ios::app);
+    if (!file.is_open()) {
+        cout << "Cannot Open File " << output_filepath << endl;
+        return false;
+    }
+    file << "--------------------------" << endl;
+    double dist_sum = 0;
+    for (auto it_edge:net_topo->get_edges()) {
+        dist_sum += it_edge.second->get_distance();
+    }
+    double average_dist = dist_sum/net_topo->get_edge_num();
+    file << "Net Average Success Rate: " << exp(-PTN_DECAY_RATE * average_dist) << endl;
+    file << "Finished Connection Num: " << get_finished_cxn_num() << endl;
+    file << "Waiting Request NUM: " << net_manager->get_waiting_request_num() << endl;
+    file.close();
+    return true;
 }

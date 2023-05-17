@@ -21,9 +21,8 @@ private:
     int finished_cxn_num;
     string output_filepath;
 public:
-    QNetwork(int ptn_src_num, int bsm_num, int user_num, int repeater_num, string output_filepath,
-             double size=10000, double alpha=0.5, double beta=0.9,
-             double decay_rate=0.0002, double z_fidelity=0.999, double x_fidelity=0.999);
+    QNetwork(int ptn_src_num, int bsm_num, int user_num, int repeater_num,
+             double size, double alpha, double beta, string output_filepath);
     QNetwork(const string& net_dev_filepath, const string& net_topo_filepath,
              const string& sd_pair_filepath, string output_filepath);
     ~QNetwork();
@@ -34,6 +33,7 @@ public:
     bool initialize(int k);
     bool work_cycle(double run_time);
     int get_finished_cxn_num() const;
+    bool finish();
 };
 
 #endif //QUANTUM_NETWORKS_QNETWORK_H

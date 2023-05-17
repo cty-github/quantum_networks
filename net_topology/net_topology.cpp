@@ -3,6 +3,7 @@
 //
 
 #include "net_topology.h"
+#include "test_params.h"
 #include "utils/rand.h"
 #include "utils/tool.h"
 #include <fstream>
@@ -16,7 +17,7 @@ NetTopology::NetTopology(): node_num(0), edge_num(0) {}
 NetTopology::NetTopology(DeviceManager* dev_mgr, int user_num, int repeater_num,
                          double size, double alpha, double beta):
 node_num(0), edge_num(0) {
-    uniform_int_distribution<int> rand_int(10,14);
+    uniform_int_distribution<int> rand_int(CAP_LOW,CAP_UP);
     uniform_real_distribution<double> rand_double(0.0,1.0);
     for (int i = 0; i < user_num + repeater_num; i++) {
         NodeType node_type;

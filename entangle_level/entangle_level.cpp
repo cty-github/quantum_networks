@@ -3,6 +3,7 @@
 //
 
 #include "entangle_level.h"
+#include "test_params.h"
 #include "utils/rand.h"
 #include <iostream>
 

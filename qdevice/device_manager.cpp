@@ -3,6 +3,7 @@
 //
 
 #include "device_manager.h"
+#include "test_params.h"
 #include "utils/rand.h"
 #include "utils/tool.h"
 #include <fstream>
@@ -11,22 +12,16 @@
 
 DeviceManager::DeviceManager(): ptn_src_num(0), bsm_num(0) {}
 
-DeviceManager::DeviceManager(int ptn_src_num, int bsm_num,
-                             double size, double decay_rate,
-                             double z_fidelity, double x_fidelity):
+DeviceManager::DeviceManager(int ptn_src_num, int bsm_num, double net_size):
 ptn_src_num(0), bsm_num(0) {
     uniform_real_distribution<double> rand_double(0.0,1.0);
     for (int i = 0; i < ptn_src_num; i++) {
-        add_ptn_src(i,
-                    size*rand_double(rand_eng),
-                    size*rand_double(rand_eng),
-                    decay_rate, 0.99);
+        add_ptn_src(i, net_size * rand_double(rand_eng), net_size * rand_double(rand_eng),
+                    PTN_DECAY_RATE, PTN_FIDE);
     }
     for (int i = 0; i < bsm_num; i++) {
-        add_bsm(i,
-                size*rand_double(rand_eng),
-                size*rand_double(rand_eng),
-                z_fidelity, x_fidelity, 1.0);
+        add_bsm(i, net_size * rand_double(rand_eng), net_size * rand_double(rand_eng),
+                BSM_Z_FIDE, BSM_X_FIDE, BSM_SUCCESS_RATE);
     }
 }
 

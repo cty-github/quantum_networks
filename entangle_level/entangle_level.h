@@ -6,7 +6,6 @@
 #define QUANTUM_NETWORKS_ENTANGLE_LEVEL_H
 
 //#include "qelement.h"
-#include "entangle_params.h"
 #include "net_topology/net_topology.h"
 #include "net_topology/path.h"
 

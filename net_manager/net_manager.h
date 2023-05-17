@@ -38,12 +38,13 @@ public:
     Path* get_path(int src_node_id, int dst_node_id);
     vector<Path*> get_paths(int src_node_id, int dst_node_id, int k);
     bool initialize(int k);
+    int get_waiting_request_num() const;
     void print_waiting_requests();
     void print_processing_requests();
     void print_serving_requests();
     void print_routing_projects();
     void print_user_connections();
-    vector<UserRequest*> random_request(double sd_prob=0.4, double req_rate=0.2);
+    vector<UserRequest*> random_request(int time, double time_prob, double sd_prob, double req_rate);
     void add_new_requests(const vector<UserRequest*>& new_requests);
     void reserve_resource(RouteProject* route_proj);
     vector<RouteProject*> calculate_new_routings();

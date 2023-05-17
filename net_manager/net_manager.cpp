@@ -3,15 +3,16 @@
 //
 
 #include "net_manager.h"
+#include "test_params.h"
 #include "utils/rand.h"
 #include <fstream>
 #include <iostream>
 #include <iomanip>
 
 NetManager::NetManager(NetTopology* net_topo, int user_num): net_topo(net_topo) {
-    double request_rate = 1.0/user_num;
+    double request_rate = SD_RATIO/user_num;
     uniform_real_distribution<double> rand_double(0.0,1.0);
-    uniform_real_distribution<double> rand_fidelity(0.95,0.99);
+    uniform_real_distribution<double> rand_fidelity(SD_FIDE_LOW,SD_FIDE_UP);
     for (int i = 0; i < user_num; i++) {
         for (int j = 0; j < user_num; j++) {
             if (i != j && rand_double(rand_eng) < request_rate) {
@@ -118,6 +119,14 @@ bool NetManager::initialize(int k) {
     return true;
 }
 
+int NetManager::get_waiting_request_num() const {
+    int waiting_num = 0;
+    for(auto request:waiting_requests) {
+        waiting_num += request.second.second;
+    }
+    return waiting_num;
+}
+
 void NetManager::print_waiting_requests() {
     cout << "- Waiting Requests" << endl;
     int waiting_num = 0;
@@ -168,31 +177,36 @@ void NetManager::print_user_connections() {
     cout << "User Connection Num: " << cxn_num << endl;
 }
 
-vector<UserRequest*> NetManager::random_request(double sd_prob, double req_rate) {
+vector<UserRequest*> NetManager::random_request(int time, double time_prob, double sd_prob, double req_rate) {
     if (net_topo == nullptr) {
         cout << "No Net Topology" << endl;
         return {};
     }
     uniform_real_distribution<double> rand_double(0.0,1.0);
     vector<UserRequest*> random_requests;
-    for (auto it:sd_pairs) {
-        SDPair* sd_pair = it.second;
-        if (rand_double(rand_eng) < sd_prob) {
-            int s_id = sd_pair->get_s_node_id();
-            int d_id = sd_pair->get_d_node_id();
-            double fide_th = sd_pair->get_fide_th();
-            int max_request = (int)(std::sqrt(net_topo->get_node(s_id)->get_memory_size() *
-                                              net_topo->get_node(d_id)->get_memory_size()) * req_rate);
-            uniform_int_distribution<int> rand_int(0,max_request);
-            int num_request = rand_int(rand_eng);
-            if (num_request == 0) {
-                continue;
+    for (int i = 0; i < time; i++) {
+        if (rand_double(rand_eng) > time_prob) {
+            continue;
+        }
+        for (auto it:sd_pairs) {
+            SDPair* sd_pair = it.second;
+            if (rand_double(rand_eng) < sd_prob) {
+                int s_id = sd_pair->get_s_node_id();
+                int d_id = sd_pair->get_d_node_id();
+                double fide_th = sd_pair->get_fide_th();
+                int max_request = (int)(std::sqrt(net_topo->get_node(s_id)->get_memory_size() *
+                                                  net_topo->get_node(d_id)->get_memory_size()) * req_rate);
+                uniform_int_distribution<int> rand_int(0,max_request);
+                int num_request = rand_int(rand_eng);
+                if (num_request == 0) {
+                    continue;
+                }
+                auto* user_request = new UserRequest(UserRequest::get_next_id(), it.first,
+                                                     s_id, d_id,
+                                                     fide_th, num_request);
+                UserRequest::add_next_id();
+                random_requests.push_back(user_request);
             }
-            auto* user_request = new UserRequest(UserRequest::get_next_id(), it.first,
-                                                 s_id, d_id,
-                                                 fide_th, num_request);
-            UserRequest::add_next_id();
-            random_requests.push_back(user_request);
         }
     }
     return random_requests;
@@ -266,7 +280,7 @@ vector<RouteProject*> NetManager::calculate_new_routings() {
             }
         }
     }
-    cout << "New Route Num: " << new_route_projects.size() << endl;
+    cout << "New Routing Num: " << new_route_projects.size() << endl;
     return new_route_projects;
 }
 

@@ -18,9 +18,7 @@ class DeviceManager {
     map<int, BSM*> bsm_list;
 public:
     DeviceManager();
-    DeviceManager(int ptn_src_num, int bsm_num,
-                  double size, double decay_rate,
-                  double z_fidelity, double x_fidelity);
+    DeviceManager(int ptn_src_num, int bsm_num, double net_size);
     explicit DeviceManager(const string& filepath);
     ~DeviceManager();
     int get_ptn_src_num() const;
