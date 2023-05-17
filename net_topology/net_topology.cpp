@@ -5,9 +5,9 @@
 #include "net_topology.h"
 #include "utils/rand.h"
 #include "utils/tool.h"
-#include <sstream>
 #include <fstream>
 #include <iostream>
+#include <iomanip>
 #include <utility>
 #include <queue>
 
@@ -243,6 +243,7 @@ bool NetTopology::save_topo(const string& filepath) const {
         cout << "Cannot Open File " << filepath << endl;
         return false;
     }
+    file << setprecision(6);
     file << "#\t\ttype\t\tid\tpos_x\tpos_y\tn_mem\tbsm" << endl;
     for (auto & it : nodes) {
         QNode* node = it.second;

@@ -1,10 +1,10 @@
-#		pair_id s_id	d_id	fide_th
-sd_pair	0       1		2		0.965306
-sd_pair	1       1		6		0.96638
-sd_pair	2       3		1		0.988108
-sd_pair	3       3		9		0.962788
-sd_pair	4       6		1		0.980154
-sd_pair	5       6		7		0.97911
-sd_pair	6       7		5		0.95468
-sd_pair	7       9		1		0.965801
+#		pair_id	s_id	d_id	fide_th
+sd_pair	0		0		7		0.979879
+sd_pair	1		1		6		0.988685
+sd_pair	2		1		7		0.960824
+sd_pair	3		2		8		0.972476
+sd_pair	4		5		1		0.955164
+sd_pair	5		7		4		0.952961
+sd_pair	6		7		8		0.985969
+sd_pair	7		9		5		0.951679
 

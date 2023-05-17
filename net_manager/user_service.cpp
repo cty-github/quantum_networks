@@ -171,6 +171,6 @@ void UserConnection::add_next_id() {
 
 void UserConnection::finish_connection() {
     finished = true;
-    cout << "Finish Connection " << connection_id << " of Request " << request_id << endl;
+//    cout << "Finish Connection " << connection_id << " of Request " << request_id << endl;
     delete etg_cxn;
 }

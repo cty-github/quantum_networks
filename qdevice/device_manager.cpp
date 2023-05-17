@@ -5,9 +5,9 @@
 #include "device_manager.h"
 #include "utils/rand.h"
 #include "utils/tool.h"
-#include <sstream>
 #include <fstream>
 #include <iostream>
+#include <iomanip>
 
 DeviceManager::DeviceManager(): ptn_src_num(0), bsm_num(0) {}
 
@@ -133,6 +133,7 @@ bool DeviceManager::save_dev(const string& filepath) const {
         cout << "Cannot Open File " << filepath << endl;
         return false;
     }
+    file << setprecision(6);
     file << "#\t\tid\tpos_x\tpos_y\tde_rate\tfide" << endl;
     for (auto & it : ptn_src_list) {
         PhotonSource* ptn_src = it.second;

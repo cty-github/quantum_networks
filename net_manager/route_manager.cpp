@@ -118,9 +118,10 @@ RouteManager::RouteManager(NetTopology* net_topo) {
 
 void RouteManager::print_routing_projects() const {
     cout << "- Routing Projects" << endl;
-    for (auto it:route_projects) {
-        it.second->print_route_proj();
-    }
+//    for (auto it:route_projects) {
+//        it.second->print_route_proj();
+//    }
+    cout << "Routing Projects Num: " << route_projects.size() << endl;
 }
 
 void RouteManager::add_new_routing(RouteProject* new_route_proj) {
@@ -144,27 +145,30 @@ void RouteManager::refresh_routing_state(int time) {
             int expire_num = it_edge_expire.second;
             link_generators[edge_id]->add_req_route(route_id, expire_num);
         }
-        route_proj->print_links();
-        cout << endl;
+//        route_proj->print_links();
+//        cout << endl;
     }
     cout << "- Generate New Links" << endl;
+    int new_link_num = 0;
     for (auto it_link_gen:link_generators) {
         int edge_id = it_link_gen.first;
         LinkGenerator* link_generator = it_link_gen.second;
         if (link_generator->get_total_rsrc_num()>0 && link_generator->get_total_req_num()>0) {
-            cout << "Edge " << edge_id << ": ";
+//            cout << "Edge " << edge_id << ": ";
             vector<EntangleLink*> new_links = link_generator->generate_links(time);
-            cout << new_links.size();
+//            cout << new_links.size();
+            new_link_num += (int)new_links.size();
             map<int, vector<EntangleLink*>> serve_route_links = link_generator->serve_requests(new_links);
             for (const auto& route_link:serve_route_links) {
                 int route_id = route_link.first;
                 vector<EntangleLink*> links = route_link.second;
                 route_projects[route_id]->add_links(edge_id, links);
-                cout << " " << route_id << "-" << links.size();
+//                cout << " " << route_id << "-" << links.size();
             }
-            cout << endl;
+//            cout << endl;
         }
     }
+    cout << "New Link Num: " << new_link_num << endl;
     cout << "- Purify and Swap Links" << endl;
     for (auto it_route_proj:route_projects) {
         RouteProject* route_proj = it_route_proj.second;
@@ -174,11 +178,11 @@ void RouteManager::refresh_routing_state(int time) {
             EntangleConnection* etg_cxn = route_proj->generate_connection();
             route_proj->set_success(etg_cxn);
         }
-        route_proj->print_links();
+//        route_proj->print_links();
         if (route_proj->is_success()) {
-            cout << "Routing Success";
+//            cout << "Routing Success";
         }
-        cout << endl;
+//        cout << endl;
     }
 }
 
@@ -191,7 +195,7 @@ map<int, vector<UserConnection*>> RouteManager::check_success_routing(NetResourc
         if (route_proj->is_success()) {
             req_user_cxn[route_proj->get_request()->get_request_id()].push_back(route_proj->get_user_cxn());
             success_routings.push_back(route_id);
-            cout << "Release Resource of Route " << route_id << endl;
+//            cout << "Release Resource of Route " << route_id << endl;
             for (auto it:route_proj->get_link_projs()) {
                 int edge_id = it.first;
                 LinkProject* link_proj = it.second;

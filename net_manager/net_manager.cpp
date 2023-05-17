@@ -4,9 +4,9 @@
 
 #include "net_manager.h"
 #include "utils/rand.h"
-#include <sstream>
 #include <fstream>
 #include <iostream>
+#include <iomanip>
 
 NetManager::NetManager(NetTopology* net_topo, int user_num): net_topo(net_topo) {
     double request_rate = 1.0/user_num;
@@ -70,6 +70,7 @@ bool NetManager::save_sd_pairs(const string& filepath) const {
         cout << "Cannot Open File " << filepath << endl;
         return false;
     }
+    file << setprecision(6);
     file << "#\t\tpair_id\ts_id\td_id\tfide_th" << endl;
     for (auto & it:sd_pairs) {
         SDPair* sd_pair = it.second;
@@ -119,26 +120,35 @@ bool NetManager::initialize(int k) {
 
 void NetManager::print_waiting_requests() {
     cout << "- Waiting Requests" << endl;
+    int waiting_num = 0;
     for(auto request:waiting_requests) {
-        request.second.first->print_request();
-        cout << " Num " << request.second.second << endl;
+//        request.second.first->print_request();
+//        cout << " Num " << request.second.second << endl;
+        waiting_num += request.second.second;
     }
+    cout << "Waiting Num: " << waiting_num << endl;
 }
 
 void NetManager::print_processing_requests() {
     cout << "- Processing Requests" << endl;
+    int processing_num = 0;
     for(auto request:processing_requests) {
-        request.second.first->print_request();
-        cout << " Num " << request.second.second << endl;
+//        request.second.first->print_request();
+//        cout << " Num " << request.second.second << endl;
+        processing_num += request.second.second;
     }
+    cout << "Processing Num: " << processing_num << endl;
 }
 
 void NetManager::print_serving_requests() {
     cout << "- Serving Requests" << endl;
+    int serving_num = 0;
     for(auto request:serving_requests) {
-        request.second.first->print_request();
-        cout << " Num " << request.second.second << endl;
+//        request.second.first->print_request();
+//        cout << " Num " << request.second.second << endl;
+        serving_num += request.second.second;
     }
+    cout << "Serving Num: " << serving_num << endl;
 }
 
 void NetManager::print_routing_projects() {
@@ -147,12 +157,15 @@ void NetManager::print_routing_projects() {
 
 void NetManager::print_user_connections() {
     cout << "- User Connections" << endl;
+    int cxn_num = 0;
     for(const auto& it_cxn:user_connections) {
-        int request_id = it_cxn.first;
-        for (auto cxn:it_cxn.second) {
-            cout << "Connection " << cxn->get_connection_id() << " Serve Request " << request_id << endl;
-        }
+//        int request_id = it_cxn.first;
+//        for (auto cxn:it_cxn.second) {
+//            cout << "Connection " << cxn->get_connection_id() << " Serve Request " << request_id << endl;
+//        }
+        cxn_num += (int)it_cxn.second.size();
     }
+    cout << "User Connection Num: " << cxn_num << endl;
 }
 
 vector<UserRequest*> NetManager::random_request(double sd_prob, double req_rate) {
@@ -193,7 +206,7 @@ void NetManager::add_new_requests(const vector<UserRequest*>& new_requests) {
 }
 
 void NetManager::reserve_resource(RouteProject* route_proj) {
-    cout << "Reserve Resource of Route " << route_proj->get_route_id() << endl;
+//    cout << "Reserve Resource of Route " << route_proj->get_route_id() << endl;
     for (auto it:route_proj->get_link_projs()) {
         LinkProject* link_proj = it.second;
         net_rsrc->reserve_link_resource(link_proj->get_s_node_id(),
@@ -253,6 +266,7 @@ vector<RouteProject*> NetManager::calculate_new_routings() {
             }
         }
     }
+    cout << "New Route Num: " << new_route_projects.size() << endl;
     return new_route_projects;
 }
 
@@ -293,6 +307,8 @@ bool NetManager::check_success_routing(const string& output_filepath) {
         cout << "Cannot Open File " << output_filepath << endl;
         return false;
     }
+    file << setiosflags(ios::fixed) << setprecision(6);
+    int success_route_num = 0;
     for (auto it_new_cxn: route_manager->check_success_routing(net_rsrc)) {
         int request_id = it_new_cxn.first;
         vector<UserConnection*>& new_cxn = it_new_cxn.second;
@@ -301,7 +317,10 @@ bool NetManager::check_success_routing(const string& output_filepath) {
                                                           user_requests[request_id]->get_start_time());
             file << "TaskCpl" << "\t";
             file << request_id << "\t\t";
+            file << user_requests[request_id]->get_pair_id() << "\t\t";
             file << cxn->get_connection_id() << "\t\t";
+            file << user_requests[request_id]->get_fide_th() << "\t";
+            file << cxn->get_fidelity() << "\t";
             file << task_completion_time << endl;
         }
         user_connections[request_id].insert(user_connections[request_id].end(),
@@ -309,6 +328,7 @@ bool NetManager::check_success_routing(const string& output_filepath) {
         UserRequest* request = user_requests[request_id];
         int processing_num = processing_requests[request_id].second;
         int success_num = (int)new_cxn.size();
+        success_route_num += success_num;
         if (processing_num == success_num) {
             processing_requests.erase(request_id);
         } else {
@@ -322,6 +342,7 @@ bool NetManager::check_success_routing(const string& output_filepath) {
         }
     }
     file.close();
+    cout << "Finish Routing Num: " << success_route_num << endl;
     return true;
 }
 
@@ -364,5 +385,6 @@ int NetManager::finish_user_connection(int time) {
     for (auto request_id:all_expire_request) {
         user_connections.erase(request_id);
     }
+    cout << "Finish Connection Num: " << finish_cxn_num << endl;
     return finish_cxn_num;
 }

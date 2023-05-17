@@ -82,7 +82,7 @@ bool QNetwork::initialize(int k) {
         cout << "Cannot Open File " << output_filepath << endl;
         return false;
     }
-    file << "#\t\treq_id\tcxn_id\ttask_cpl_time" << endl;
+    file << "#\t\treq_id\tpair_id\tcxn_id\tfide_th\t\tfide_cxn\ttask_cpl_time" << endl;
     file.close();
 
     cout << "--------------------------" << endl;
@@ -108,7 +108,7 @@ bool QNetwork::work_cycle(double run_time) {
     cout << "--------------------------" << endl;
     cout << "Work Cycle Duration: " << time_interval << endl;
     cout << "----- Requests Phase -----" << endl;
-    net_manager->add_new_requests(net_manager->random_request(0.4, 0.2));
+    net_manager->add_new_requests(net_manager->random_request(0.05, 0.2));
     net_manager->print_waiting_requests();
     cout << "----- Routings Phase -----" << endl;
     net_manager->schedule_new_routings();
