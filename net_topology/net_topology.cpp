@@ -17,7 +17,8 @@ NetTopology::NetTopology(): node_num(0), edge_num(0) {}
 NetTopology::NetTopology(DeviceManager* dev_mgr, int user_num, int repeater_num,
                          double size, double alpha, double beta):
 node_num(0), edge_num(0) {
-    uniform_int_distribution<int> rand_int(CAP_LOW,CAP_UP);
+    uniform_int_distribution<int> rand_mem(MEM_LOW, MEM_UP);
+    uniform_int_distribution<int> rand_cap(CAP_LOW, CAP_UP);
     uniform_real_distribution<double> rand_double(0.0,1.0);
     for (int i = 0; i < user_num + repeater_num; i++) {
         NodeType node_type;
@@ -29,7 +30,7 @@ node_num(0), edge_num(0) {
         double pos_x = size*rand_double(rand_eng);
         double pos_y = size*rand_double(rand_eng);
         BSM* bsm = dev_mgr->get_closest_bsm(pos_x, pos_y);
-        add_node(i, node_type, pos_x, pos_y, rand_int(rand_eng), bsm);
+        add_node(i, node_type, pos_x, pos_y, rand_mem(rand_eng), bsm);
     }
     for (int i = 0; i < node_num; i++) {
         for (int j = i+1; j < node_num; j++) {
@@ -44,7 +45,7 @@ node_num(0), edge_num(0) {
                 double p_i = exp(-ptn_src->get_decay_rate()*dist(i_x, i_y, ptn_x, ptn_y));
                 double p_j = exp(-ptn_src->get_decay_rate()*dist(j_x, j_y, ptn_x, ptn_y));
                 double success_rate = p_i * p_j;
-                add_edge(edge_num, i, j, rand_int(rand_eng),
+                add_edge(edge_num, i, j, rand_cap(rand_eng),
                          get_distance(i, j), success_rate, ptn_src);
             }
         }

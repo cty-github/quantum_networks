@@ -35,6 +35,10 @@ NetManager::NetManager(const string& filepath, NetTopology *net_topo): net_topo(
 
 NetManager::~NetManager() = default;
 
+int NetManager::get_sd_num() const {
+    return (int)sd_pairs.size();
+}
+
 void NetManager::load_sd_pairs(const string& filepath) {
     ifstream file;
     file.open(filepath,ios::in);
@@ -280,12 +284,11 @@ vector<RouteProject*> NetManager::calculate_new_routings() {
             }
         }
     }
-    cout << "New Routing Num: " << new_route_projects.size() << endl;
     return new_route_projects;
 }
 
 void NetManager::schedule_new_routings() {
-    cout << "- New Routings" << endl;
+    //  - New Routings
     vector<RouteProject*> new_route_projects = calculate_new_routings();
     for (auto new_route_proj:new_route_projects) {
         UserRequest* request = new_route_proj->get_request();
@@ -313,15 +316,16 @@ void NetManager::refresh_routing_state(int time) {
     route_manager->refresh_routing_state(time);
 }
 
-bool NetManager::check_success_routing(const string& output_filepath) {
-    cout << "- Finish Routings" << endl;
-    ofstream file;
-    file.open(output_filepath,ios::app);
-    if (!file.is_open()) {
-        cout << "Cannot Open File " << output_filepath << endl;
+int NetManager::check_success_routing(const string& runtime_filepath) {
+    //  - Finish Routings
+    ofstream runtime_file;
+    runtime_file.open(runtime_filepath, ios::app);
+    if (!runtime_file.is_open()) {
+        cout << "Cannot Open File " << runtime_filepath << endl;
         return false;
     }
-    file << setiosflags(ios::fixed) << setprecision(6);
+    //  #  req_id  pair_id  cxn_id  fide_th  fide_cxn  task_cpl_time
+    runtime_file << setiosflags(ios::fixed) << setprecision(6);
     int success_route_num = 0;
     for (auto it_new_cxn: route_manager->check_success_routing(net_rsrc)) {
         int request_id = it_new_cxn.first;
@@ -329,13 +333,13 @@ bool NetManager::check_success_routing(const string& output_filepath) {
         for (auto cxn:new_cxn) {
             double task_completion_time = get_time_second(cxn->get_created_time(),
                                                           user_requests[request_id]->get_start_time());
-            file << "TaskCpl" << "\t";
-            file << request_id << "\t\t";
-            file << user_requests[request_id]->get_pair_id() << "\t\t";
-            file << cxn->get_connection_id() << "\t\t";
-            file << user_requests[request_id]->get_fide_th() << "\t";
-            file << cxn->get_fidelity() << "\t";
-            file << task_completion_time << endl;
+            runtime_file << "TaskCpl" << "\t";
+            runtime_file << request_id << "\t";
+            runtime_file << user_requests[request_id]->get_pair_id() << "\t";
+            runtime_file << cxn->get_connection_id() << "\t";
+            runtime_file << user_requests[request_id]->get_fide_th() << "\t";
+            runtime_file << cxn->get_fidelity() << "\t";
+            runtime_file << task_completion_time << endl;
         }
         user_connections[request_id].insert(user_connections[request_id].end(),
                                             new_cxn.begin(), new_cxn.end());
@@ -355,13 +359,12 @@ bool NetManager::check_success_routing(const string& output_filepath) {
             serving_requests[request_id].second += success_num;
         }
     }
-    file.close();
-    cout << "Finish Routing Num: " << success_route_num << endl;
-    return true;
+    runtime_file.close();
+    return success_route_num;
 }
 
 int NetManager::finish_user_connection(int time) {
-    cout << "- Finish Connections" << endl;
+    //  - Finish Connections
     vector<int> all_expire_request;
     int finish_cxn_num = 0;
     for (auto& it_user_cxn:user_connections) {
@@ -399,6 +402,5 @@ int NetManager::finish_user_connection(int time) {
     for (auto request_id:all_expire_request) {
         user_connections.erase(request_id);
     }
-    cout << "Finish Connection Num: " << finish_cxn_num << endl;
     return finish_cxn_num;
 }

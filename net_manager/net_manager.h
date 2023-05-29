@@ -33,6 +33,7 @@ public:
     NetManager(NetTopology* net_topo, int user_num);
     NetManager(const string& filepath, NetTopology* net_topo);
     ~NetManager();
+    int get_sd_num() const;
     void load_sd_pairs(const string& filepath);
     bool save_sd_pairs(const string& filepath) const;
     Path* get_path(int src_node_id, int dst_node_id);
@@ -50,7 +51,7 @@ public:
     vector<RouteProject*> calculate_new_routings();
     void schedule_new_routings();
     void refresh_routing_state(int time);
-    bool check_success_routing(const string& output_filepath);
+    int check_success_routing(const string& runtime_filepath);
     int finish_user_connection(int time);
 };
 

@@ -135,7 +135,7 @@ void RouteManager::add_new_routing(RouteProject* new_route_proj) {
 }
 
 void RouteManager::refresh_routing_state(int time) {
-    cout << "- Update Old Links" << endl;
+    //  - Update Old Links
     for (auto it_route_proj:route_projects) {
         int route_id = it_route_proj.first;
         RouteProject* route_proj = it_route_proj.second;
@@ -148,7 +148,7 @@ void RouteManager::refresh_routing_state(int time) {
 //        route_proj->print_links();
 //        cout << endl;
     }
-    cout << "- Generate New Links" << endl;
+    //  - Generate New Links
     int new_link_num = 0;
     for (auto it_link_gen:link_generators) {
         int edge_id = it_link_gen.first;
@@ -168,8 +168,8 @@ void RouteManager::refresh_routing_state(int time) {
 //            cout << endl;
         }
     }
-    cout << "New Link Num: " << new_link_num << endl;
-    cout << "- Purify and Swap Links" << endl;
+//    cout << "New Link Num: " << new_link_num << endl;
+    //  - Purify and Swap Links
     for (auto it_route_proj:route_projects) {
         RouteProject* route_proj = it_route_proj.second;
         route_proj->purify_available_links();
