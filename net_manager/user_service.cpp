@@ -38,15 +38,11 @@ void SDPair::add_next_id() {
 
 int UserRequest::next_id = 0;
 
-UserRequest::UserRequest(int request_id, int pair_id,
-                         int s_node_id, int d_node_id,
-                         double fide_th, int request_num):
+UserRequest::UserRequest(int request_id, int pair_id, int s_node_id, int d_node_id, double fide_th):
 request_id(request_id), pair_id(pair_id),
 s_node_id(s_node_id), d_node_id(d_node_id),
-fide_th(fide_th), request_num(request_num),
-processed_num(0), served_num(0),
-start_time(get_current_time()),
-finished(false), end(false) {}
+fide_th(fide_th), request_time(get_current_time()),
+created(false), closed(false) {}
 
 UserRequest::~UserRequest() = default;
 
@@ -70,35 +66,29 @@ double UserRequest::get_fide_th() const {
     return fide_th;
 }
 
-int UserRequest::get_request_num() const {
-    return request_num;
+bool UserRequest::has_created() const {
+    return created;
 }
 
-void UserRequest::add_processed_num(int num) {
-    processed_num += num;
-    if (processed_num == request_num) {
-        finished = true;
-        finish_time = get_current_time();
-    }
+void UserRequest::set_created() {
+    created = true;
+    satisfy_time = get_current_time();
 }
 
-void UserRequest::add_served_num(int num) {
-    served_num += num;
-    if (served_num == request_num) {
-        end = true;
-    }
+bool UserRequest::has_closed() const {
+    return closed;
 }
 
-ClockTime UserRequest::get_start_time() const {
-    return start_time;
+void UserRequest::set_closed() {
+    closed = true;
 }
 
-bool UserRequest::is_finished() const {
-    return finished;
+ClockTime UserRequest::get_request_time() const {
+    return request_time;
 }
 
-bool UserRequest::has_end() const {
-    return end;
+ClockTime UserRequest::get_satisfy_time() const {
+    return satisfy_time;
 }
 
 int UserRequest::get_next_id() {
@@ -110,13 +100,13 @@ void UserRequest::add_next_id() {
 }
 
 void UserRequest::print_request() const {
-    cout << "Request " << request_id << ": SD " << s_node_id << "->" << d_node_id << " Fide " << fide_th;
+    cout << "Request " << request_id << ": SD " << s_node_id << "->" << d_node_id << " Fide " << fide_th << endl;
 }
 
 int UserConnection::next_id = 0;
 
-UserConnection::UserConnection(EntangleConnection* etg_cxn, int connection_id, int request_id):
-etg_cxn(etg_cxn), connection_id(connection_id), request_id(request_id),
+UserConnection::UserConnection(EntangleConnection* etg_cxn, int connection_id, int request_id, int route_id):
+etg_cxn(etg_cxn), connection_id(connection_id), request_id(request_id), route_id(route_id),
 created_time(get_current_time()), finished(false) {}
 
 UserConnection::~UserConnection() = default;
@@ -151,6 +141,10 @@ int UserConnection::get_connection_id() const {
 
 int UserConnection::get_request_id() const {
     return request_id;
+}
+
+int UserConnection::get_route_id() const {
+    return route_id;
 }
 
 ClockTime UserConnection::get_created_time() const {

@@ -1,12 +1,13 @@
 #include <iostream>
 #include <dirent.h>
+#include <sys/stat.h>
 #include "qnetwork.h"
 #include "test_params.h"
 
 using namespace std;
 
 int main() {
-    string proj_path = "D:/Quantum Technology and Device/Quantum Networks/Code/quantum_networks/";
+    string proj_path = "/Users/chutianyao/Data/Quantum Technology and Device/Quantum Networks/code/quantum_networks/";
     string current_time_stamp = get_current_time_stamp();
 
 //    // example network
@@ -18,7 +19,7 @@ int main() {
 
     // test network
     string test_path = proj_path+"data/test/"+current_time_stamp+"/";
-    mkdir(test_path.c_str());
+    mkdir(test_path.c_str(), 0777);
     QNetwork qnetwork = QNetwork(PTNSRC_NUM, BSM_NUM,
                                  USER_NUM, REPEATER_NUM,
                                  NET_SIZE, ALPHA, BETA,

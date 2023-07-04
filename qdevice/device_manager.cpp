@@ -7,6 +7,7 @@
 #include "utils/rand.h"
 #include "utils/tool.h"
 #include <fstream>
+#include <sstream>
 #include <iostream>
 #include <iomanip>
 

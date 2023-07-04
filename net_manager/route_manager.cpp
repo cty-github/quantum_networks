@@ -4,6 +4,7 @@
 
 #include "route_manager.h"
 #include "utils/rand.h"
+#include "test_params.h"
 #include <iostream>
 
 int RouteProject::next_id = 0;
@@ -21,10 +22,11 @@ route_id(route_id), path(path), request(request), success(false), user_cxn(nullp
         int node_id_b = nodes[i+1]->get_id();
         int edge_id = edges[i]->get_edge_id();
         auto* link_proj = new LinkProject(node_id_a, node_id_b, edge_id,
-                                          route_id, rsrc_num, 1);
+                                          route_id, rsrc_num, 1,
+                                          {1,0}, {1,0}, {1,0});
         link_projects[edge_id] = link_proj;
     }
-    link_manager = new LinkManager(link_projects);
+    link_manager = new LinkManager(link_projects, route_id);
 }
 
 int RouteProject::get_route_id() const {
@@ -51,20 +53,20 @@ map<int, int> RouteProject::update_entangles(int time) {
     return link_manager->update_entangles(time);
 }
 
-void RouteProject::purify_available_links() {
-    link_manager->purify_available_links(path);
+map<int, int> RouteProject::purify_available_links(HsRsrcManager* net_rsrc) {
+    return link_manager->purify_available_links(path, net_rsrc);
 }
 
-void RouteProject::swap_all_connected() {
-    link_manager->swap_all_connected(path);
+map<int, int> RouteProject::swap_all_connected(HsRsrcManager* net_rsrc) {
+    return link_manager->swap_all_connected(path, net_rsrc);
 }
 
 bool RouteProject::check_user_connection() {
     return link_manager->check_user_connection(request->get_s_node_id(), request->get_d_node_id());
 }
 
-EntangleConnection* RouteProject::generate_connection() {
-    return link_manager->generate_connection(request->get_s_node_id(), request->get_d_node_id());
+EntangleConnection* RouteProject::generate_connection(HsRsrcManager* net_rsrc) {
+    return link_manager->generate_connection(request->get_s_node_id(), request->get_d_node_id(), net_rsrc);
 }
 
 bool RouteProject::is_success() const {
@@ -74,7 +76,7 @@ bool RouteProject::is_success() const {
 void RouteProject::set_success(EntangleConnection* etg_cxn) {
     success = true;
     user_cxn = new UserConnection(etg_cxn, UserConnection::get_next_id(),
-                                  request->get_request_id());
+                                  request->get_request_id(), route_id);
     UserConnection::add_next_id();
 }
 
@@ -105,7 +107,7 @@ void RouteProject::add_next_id() {
     next_id++;
 }
 
-RouteManager::RouteManager(NetTopology* net_topo) {
+RouteManager::RouteManager(NetTopology* net_topo): net_topo(net_topo) {
     for (auto it:net_topo->get_edges()) {
         QEdge* edge = it.second;
         link_generators[it.first] = new LinkGenerator(it.first,
@@ -129,12 +131,12 @@ void RouteManager::add_new_routing(RouteProject* new_route_proj) {
     for (auto it:new_route_proj->get_link_projs()) {
         int edge_id = it.first;
         LinkProject* link_proj = it.second;
-        link_generators[edge_id]->add_rsrc_num(link_proj->get_rsrc_num());
+        link_generators[edge_id]->add_rsrc_num(link_proj->get_total_rsrc_num());
         link_generators[edge_id]->add_req_route(link_proj->get_route_id(), link_proj->get_req_num());
     }
 }
 
-void RouteManager::refresh_routing_state(int time) {
+void RouteManager::refresh_routing_state(int time, HsRsrcManager* net_rsrc) {
     //  - Update Old Links
     for (auto it_route_proj:route_projects) {
         int route_id = it_route_proj.first;
@@ -153,7 +155,7 @@ void RouteManager::refresh_routing_state(int time) {
     for (auto it_link_gen:link_generators) {
         int edge_id = it_link_gen.first;
         LinkGenerator* link_generator = it_link_gen.second;
-        if (link_generator->get_total_rsrc_num()>0 && link_generator->get_total_req_num()>0) {
+        if (link_generator->get_total_rsrc_num() > 0 && link_generator->get_total_req_num() > 0) {
 //            cout << "Edge " << edge_id << ": ";
             vector<EntangleLink*> new_links = link_generator->generate_links(time);
 //            cout << new_links.size();
@@ -172,10 +174,31 @@ void RouteManager::refresh_routing_state(int time) {
     //  - Purify and Swap Links
     for (auto it_route_proj:route_projects) {
         RouteProject* route_proj = it_route_proj.second;
-        route_proj->purify_available_links();
-        route_proj->swap_all_connected();
+        switch (RSRC_MANAGE) {
+            case 0: {
+                route_proj->purify_available_links();
+                route_proj->swap_all_connected();
+                break;
+            }
+            case 1: {
+                map<int, int> link_gen_rls = route_proj->purify_available_links((HsRsrcManager*)net_rsrc);
+                for (auto it:link_gen_rls) {
+                    link_generators[it.first]->sub_rsrc_num(it.second);
+                }
+                map<int, int> link_gen_rcv = route_proj->swap_all_connected((HsRsrcManager*)net_rsrc);
+                for (auto it:link_gen_rls) {
+                    link_generators[it.first]->add_rsrc_num(it.second);
+                }
+                break;
+            }
+            default: {
+                route_proj->purify_available_links();
+                route_proj->swap_all_connected();
+                break;
+            }
+        }
         if (route_proj->check_user_connection()) {
-            EntangleConnection* etg_cxn = route_proj->generate_connection();
+            EntangleConnection* etg_cxn = route_proj->generate_connection(net_rsrc);
             route_proj->set_success(etg_cxn);
         }
 //        route_proj->print_links();
@@ -186,26 +209,52 @@ void RouteManager::refresh_routing_state(int time) {
     }
 }
 
-map<int, vector<UserConnection*>> RouteManager::check_success_routing(NetResource* net_rsrc) {
-    map<int, vector<UserConnection*>> req_user_cxn; // map from request id to constructed connections
+map<int, UserConnection*> RouteManager::check_success_routing(RsrcManager* net_rsrc) {
+    map<int, UserConnection*> req_user_cxn; // map from request id to constructed connection
     vector<int> success_routings;
     for (auto it_route_proj:route_projects) {
         int route_id = it_route_proj.first;
         RouteProject* route_proj = it_route_proj.second;
         if (route_proj->is_success()) {
-            req_user_cxn[route_proj->get_request()->get_request_id()].push_back(route_proj->get_user_cxn());
+            int request_id = route_proj->get_request()->get_request_id();
+            if (req_user_cxn.find(request_id) != req_user_cxn.end()) {
+                throw logic_error("Duplicate connections for request " + to_string(request_id));
+            }
+            req_user_cxn[request_id] = route_proj->get_user_cxn();
             success_routings.push_back(route_id);
 //            cout << "Release Resource of Route " << route_id << endl;
-            for (auto it:route_proj->get_link_projs()) {
-                int edge_id = it.first;
-                LinkProject* link_proj = it.second;
-                link_generators[edge_id]->sub_rsrc_num(link_proj->get_rsrc_num());
-                net_rsrc->release_link_resource(link_proj->get_s_node_id(),
-                                                link_proj->get_d_node_id(),
-                                                link_proj->get_rsrc_num());
+            if (RSRC_MANAGE == 0) {
+                for (auto it:route_proj->get_link_projs()) {
+                    int edge_id = it.first;
+                    LinkProject* link_proj = it.second;
+                    link_generators[edge_id]->sub_rsrc_num(link_proj->get_total_rsrc_num());
+                    net_rsrc->release_link_resource(link_proj->get_s_node_id(),
+                                                    link_proj->get_d_node_id(),
+                                                    link_proj->get_total_rsrc_num(),
+                                                    route_id);
+                }
+                net_rsrc->reserve_node_memory(route_proj->get_user_cxn()->get_s_node_id(), 1, route_id);
+                net_rsrc->reserve_node_memory(route_proj->get_user_cxn()->get_d_node_id(), 1, route_id);
+            } else if (RSRC_MANAGE == 1) {
+                for (auto it:route_proj->get_link_projs()) {
+                    int edge_id = it.first;
+                    LinkProject* link_proj = it.second;
+                    int s_id = link_proj->get_s_node_id();
+                    int d_id = link_proj->get_d_node_id();
+                    net_rsrc->release_edge_channel(edge_id, link_proj->get_total_rsrc_num(), route_id);
+                    link_generators[edge_id]->sub_rsrc_num(link_proj->get_edge_rsrc().second);
+                    if (net_topo->get_node(s_id)->is_user()) {
+                        net_rsrc->release_node_memory(s_id, link_proj->get_total_rsrc_num()-1, route_id);
+                    } else {
+                        net_rsrc->release_node_memory(s_id, link_proj->get_total_rsrc_num(), route_id);
+                    }
+                    if (net_topo->get_node(d_id)->is_user()) {
+                        net_rsrc->release_node_memory(d_id, link_proj->get_total_rsrc_num()-1, route_id);
+                    } else {
+                        net_rsrc->release_node_memory(d_id, link_proj->get_total_rsrc_num(), route_id);
+                    }
+                }
             }
-            net_rsrc->reserve_node_memory(route_proj->get_user_cxn()->get_s_node_id(), 1);
-            net_rsrc->reserve_node_memory(route_proj->get_user_cxn()->get_d_node_id(), 1);
         }
     }
     for (auto route_id:success_routings) {

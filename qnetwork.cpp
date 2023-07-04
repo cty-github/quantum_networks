@@ -10,33 +10,36 @@
 #include <utility>
 
 QNetwork::QNetwork(int ptn_src_num, int bsm_num, int user_num, int repeater_num,
-                   double size, double alpha, double beta,
-                   string runtime_filepath, string metric_filepath):
-start_time_point(get_current_time()),
-sample_time_point(get_current_time()),
-current_time_point(get_current_time()),
-sample_route_num(0), sample_cxn_num(0),
-finished_route_num(0), finished_cxn_num(0),
-runtime_filepath(std::move(runtime_filepath)), metric_filepath(std::move(metric_filepath)) {
+                   double size, double alpha, double beta, const string& runtime_filepath, string metric_filepath):
+start_time_point(get_current_time()), sample_time_point(get_current_time()), current_time_point(get_current_time()),
+sample_route_num(0), sample_cxn_num(0), finished_route_num(0), finished_cxn_num(0),
+runtime_filepath(runtime_filepath), metric_filepath(std::move(metric_filepath)) {
+    runtime_file.open(runtime_filepath, ios::app);
+    if (!runtime_file.is_open()) {
+        throw logic_error("Cannot Open File " + runtime_filepath);
+    }
     device_manager = new DeviceManager(ptn_src_num, bsm_num, size);
     net_topo = new NetTopology(device_manager, user_num, repeater_num, size, alpha, beta);
     net_manager = new NetManager(net_topo, user_num);
 }
 
 QNetwork::QNetwork(const string& net_dev_filepath, const string& net_topo_filepath, const string& sd_pair_filepath,
-                   string runtime_filepath, string metric_filepath):
-start_time_point(get_current_time()),
-sample_time_point(get_current_time()),
-current_time_point(get_current_time()),
-sample_route_num(0), sample_cxn_num(0),
-finished_route_num(0), finished_cxn_num(0),
-runtime_filepath(std::move(runtime_filepath)), metric_filepath(std::move(metric_filepath)) {
+                   const string& runtime_filepath, string metric_filepath):
+start_time_point(get_current_time()), sample_time_point(get_current_time()), current_time_point(get_current_time()),
+sample_route_num(0), sample_cxn_num(0), finished_route_num(0), finished_cxn_num(0),
+runtime_filepath(runtime_filepath), metric_filepath(std::move(metric_filepath)) {
+    runtime_file.open(runtime_filepath, ios::app);
+    if (!runtime_file.is_open()) {
+        throw logic_error("Cannot Open File " + runtime_filepath);
+    }
     device_manager = new DeviceManager(net_dev_filepath);
     net_topo = new NetTopology(net_topo_filepath, device_manager);
     net_manager = new NetManager(sd_pair_filepath, net_topo);
 }
 
-QNetwork::~QNetwork() = default;
+QNetwork::~QNetwork() {
+    runtime_file.close();
+}
 
 //bool QNetwork::draw_net_topo(const string& filepath) const {
 //    if (net_topo == nullptr) {
@@ -144,20 +147,13 @@ bool QNetwork::work_cycle(double run_time) {
 }
 
 bool QNetwork::sample_cycle(int time_interval, int cycle_finish_route, int cycle_finish_cxn) {
-    ofstream runtime_file;
-    runtime_file.open(runtime_filepath, ios::app);
-    if (!runtime_file.is_open()) {
-        cout << "Cannot Open File " << runtime_filepath << endl;
-        return false;
-    }
     //  #  duration  waiting_num  route_num  connection_num
     runtime_file << "Cycle" << "\t";
     runtime_file << time_interval << "\t";
-    runtime_file << net_manager->get_waiting_request_num() << "\t";
+    runtime_file << net_manager->get_waiting_num() << "\t";
     runtime_file << cycle_finish_route << "\t";
     runtime_file << cycle_finish_cxn << endl;
     runtime_file << endl;
-    runtime_file.close();
     return true;
 }
 
@@ -188,10 +184,14 @@ bool QNetwork::finish() {
     metric_file << "Cap Upper Bound: " << CAP_UP << endl;
     metric_file << endl;
     metric_file << "-------- Request --------" << endl;
-    metric_file << "Request Rate: " << IPS * TIME_PROB * net_manager->get_sd_num() * SD_PROB << "/s" << endl;
+    metric_file << "Request Rate: " << (double)IPS * TIME_PROB * net_manager->get_sd_num() * SD_PROB << "/s" << endl;
+    metric_file << endl;
+    metric_file << "-------- Process --------" << endl;
+    metric_file << "Route Strategy: " << ROUTE_STRTG << endl;
+    metric_file << "Resource Manage: " << RSRC_MANAGE << endl;
     metric_file << endl;
     metric_file << "------ Performance ------" << endl;
-    metric_file << "Connection Rate: " << finished_cxn_num / RUN_TIME << "/s" << endl;
+    metric_file << "Connection Rate: " << (double)finished_cxn_num / RUN_TIME << "/s" << endl;
     metric_file << endl;
     metric_file.close();
     return true;

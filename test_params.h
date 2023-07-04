@@ -31,6 +31,10 @@
 #define IPS 10000
 #define SAMPLE_INT 1000
 
+// realization methods
+#define ROUTE_STRTG 0   // route strategy type
+#define RSRC_MANAGE 1   // net rsrc manager type
+
 // request parameters
 #define SD_RATIO 1.0    // determine serve sd pair
 #define SD_FIDE_UP 0.99
@@ -43,3 +47,7 @@
 #define LIFESPAN 10000
 
 #endif //QUANTUM_NETWORKS_TEST_PARAMS_H
+
+#include <fstream>
+
+ofstream runtime_file;

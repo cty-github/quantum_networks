@@ -34,28 +34,25 @@ private:
     int s_node_id;
     int d_node_id;
     double fide_th;
-    int request_num;
-    int processed_num;
-    int served_num;
-    ClockTime start_time;
-    bool finished;  // process finished
-    ClockTime finish_time;  // finish of process
-    bool end;   // all connections of request end
+    bool created;  // connection created
+    bool closed;   // connection closed
+    ClockTime request_time;
+    ClockTime satisfy_time;  // connection created
     static int next_id;
 public:
-    UserRequest(int request_id, int pair_id, int s_node_id, int d_node_id, double fide_th, int request_num);
+    UserRequest(int request_id, int pair_id, int s_node_id, int d_node_id, double fide_th);
     ~UserRequest();
     int get_request_id() const;
     int get_pair_id() const;
     int get_s_node_id() const;
     int get_d_node_id() const;
     double get_fide_th() const;
-    int get_request_num() const;
-    void add_processed_num(int num);
-    void add_served_num(int num);
-    ClockTime get_start_time() const;
-    bool is_finished() const;
-    bool has_end() const;
+    bool has_created() const;
+    void set_created();
+    bool has_closed() const;
+    void set_closed();
+    ClockTime get_request_time() const;
+    ClockTime get_satisfy_time() const;
     static int get_next_id();
     static void add_next_id();
     void print_request() const;
@@ -66,11 +63,12 @@ private:
     EntangleConnection* etg_cxn;
     int connection_id;
     int request_id;
+    int route_id;
     ClockTime created_time;
     bool finished;
     static int next_id;
 public:
-    UserConnection(EntangleConnection* etg_cxn, int connection_id, int request_id);
+    UserConnection(EntangleConnection* etg_cxn, int connection_id, int request_id, int route_id);
     ~UserConnection();
     int get_s_node_id() const;
     int get_d_node_id() const;
@@ -80,6 +78,7 @@ public:
     bool is_expired() const;
     int get_connection_id() const;
     int get_request_id() const;
+    int get_route_id() const;
     ClockTime get_created_time() const;
     bool is_finished() const;
     static int get_next_id();

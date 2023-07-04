@@ -7,6 +7,7 @@
 #include "utils/rand.h"
 #include "utils/tool.h"
 #include <fstream>
+#include <sstream>
 #include <iostream>
 #include <iomanip>
 #include <utility>
@@ -273,7 +274,7 @@ bool NetTopology::save_topo(const string& filepath) const {
                 file << edge->get_edge_id() << "\t\t";
                 file << edge->get_node_id_a() << "\t\t";
                 file << edge->get_node_id_b() << "\t\t";
-                file << edge->get_capacity() << '\t';
+                file << edge->get_channel_capacity() << '\t';
                 file << edge->get_ptn_src()->get_id() << endl;
             }
         }

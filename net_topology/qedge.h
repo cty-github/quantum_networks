@@ -12,12 +12,12 @@ private:
     int edge_id;
     int node_id_a;
     int node_id_b;
-    int capacity;
+    int channel_capacity;
     double distance;
     double success_rate;
     PhotonSource* ptn_src;
 public:
-    QEdge(int edge_id, int node_id_a, int node_id_b, int capacity,
+    QEdge(int edge_id, int node_id_a, int node_id_b, int channel_capacity,
           double distance, double success_rate, PhotonSource* ptn_src);
     QEdge(const QEdge& edge);
     ~QEdge();
@@ -25,7 +25,7 @@ public:
     int get_edge_id() const;
     int get_node_id_a() const;
     int get_node_id_b() const;
-    int get_capacity() const;
+    int get_channel_capacity() const;
     double get_distance() const;
     double get_success_rate() const;
     PhotonSource* get_ptn_src() const;

@@ -3,6 +3,7 @@
 //
 
 #include "timing.h"
+#include <sstream>
 #include <iomanip>
 
 ClockTime get_current_time() {
