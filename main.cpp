@@ -1,12 +1,17 @@
 #include <iostream>
-#include <dirent.h>
 #include <sys/stat.h>
 #include "qnetwork.h"
 #include "test_params.h"
 
 using namespace std;
 
+int ROUTE_STRTG;   // route strategy type
+int RSRC_MANAGE;   // net rsrc manager type
+
 int main() {
+    ROUTE_STRTG = ROUTE_STRTG_;
+    RSRC_MANAGE = RSRC_MANAGE_;
+
     string proj_path = "/Users/chutianyao/Data/Quantum Technology and Device/Quantum Networks/code/quantum_networks/";
     string current_time_stamp = get_current_time_stamp();
 

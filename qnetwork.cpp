@@ -4,42 +4,34 @@
 
 #include "qnetwork.h"
 #include "test_params.h"
-#include "utils/rand.h"
 #include <iostream>
 #include <fstream>
 #include <utility>
 
+extern int ROUTE_STRTG;
+extern int RSRC_MANAGE;
+
 QNetwork::QNetwork(int ptn_src_num, int bsm_num, int user_num, int repeater_num,
-                   double size, double alpha, double beta, const string& runtime_filepath, string metric_filepath):
+                   double size, double alpha, double beta, string runtime_filepath, string metric_filepath):
 start_time_point(get_current_time()), sample_time_point(get_current_time()), current_time_point(get_current_time()),
 sample_route_num(0), sample_cxn_num(0), finished_route_num(0), finished_cxn_num(0),
-runtime_filepath(runtime_filepath), metric_filepath(std::move(metric_filepath)) {
-    runtime_file.open(runtime_filepath, ios::app);
-    if (!runtime_file.is_open()) {
-        throw logic_error("Cannot Open File " + runtime_filepath);
-    }
+runtime_filepath(std::move(runtime_filepath)), metric_filepath(std::move(metric_filepath)) {
     device_manager = new DeviceManager(ptn_src_num, bsm_num, size);
     net_topo = new NetTopology(device_manager, user_num, repeater_num, size, alpha, beta);
     net_manager = new NetManager(net_topo, user_num);
 }
 
 QNetwork::QNetwork(const string& net_dev_filepath, const string& net_topo_filepath, const string& sd_pair_filepath,
-                   const string& runtime_filepath, string metric_filepath):
+                   string runtime_filepath, string metric_filepath):
 start_time_point(get_current_time()), sample_time_point(get_current_time()), current_time_point(get_current_time()),
 sample_route_num(0), sample_cxn_num(0), finished_route_num(0), finished_cxn_num(0),
-runtime_filepath(runtime_filepath), metric_filepath(std::move(metric_filepath)) {
-    runtime_file.open(runtime_filepath, ios::app);
-    if (!runtime_file.is_open()) {
-        throw logic_error("Cannot Open File " + runtime_filepath);
-    }
+runtime_filepath(std::move(runtime_filepath)), metric_filepath(std::move(metric_filepath)) {
     device_manager = new DeviceManager(net_dev_filepath);
     net_topo = new NetTopology(net_topo_filepath, device_manager);
     net_manager = new NetManager(sd_pair_filepath, net_topo);
 }
 
-QNetwork::~QNetwork() {
-    runtime_file.close();
-}
+QNetwork::~QNetwork() = default;
 
 //bool QNetwork::draw_net_topo(const string& filepath) const {
 //    if (net_topo == nullptr) {
@@ -106,28 +98,31 @@ bool QNetwork::work_cycle(double run_time) {
     current_time_point = get_current_time();
     int time_interval = get_time_interval(current_time_point, last_time_point);
 
-    //  ----- Requests Phase -----
+    //  ---------- Requests Phase ----------
+    cout << "---------- Requests Phase ----------" << endl;
     vector<UserRequest*> new_requests = net_manager->random_request(time_interval, TIME_PROB,
                                                                     SD_PROB, REQ_RATE);
     net_manager->add_new_requests(new_requests);
-//    net_manager->print_waiting_requests();
+    net_manager->print_waiting_requests();
 
-    //  ----- Routings Phase -----
+    //  ---------- Routings Phase ----------
+    cout << "---------- Routings Phase ----------" << endl;
     net_manager->schedule_new_routings();
-//    net_manager->print_routing_projects();
+    net_manager->print_routing_projects();
     net_manager->refresh_routing_state(time_interval);
-//    net_manager->print_processing_requests();
+    net_manager->print_processing_requests();
 
-    //  ----- Services Phase -----
+    //  ---------- Services Phase ----------
+    cout << "---------- Services Phase ----------" << endl;
     int cycle_finish_route = net_manager->check_success_routing(runtime_filepath);
     sample_route_num += cycle_finish_route;
     finished_route_num += cycle_finish_route;
-//    net_manager->print_serving_requests();
-//    net_manager->print_user_connections();
+    net_manager->print_serving_requests();
+    net_manager->print_user_connections();
     int cycle_finish_cxn = net_manager->finish_user_connection(time_interval);
     sample_cxn_num += cycle_finish_cxn;
     finished_cxn_num += cycle_finish_cxn;
-//    cout << endl;
+    cout << endl;
 
     int sample_time_interval = get_time_interval(current_time_point, sample_time_point);
     if (get_time_second(current_time_point, start_time_point) > run_time) {
@@ -147,6 +142,11 @@ bool QNetwork::work_cycle(double run_time) {
 }
 
 bool QNetwork::sample_cycle(int time_interval, int cycle_finish_route, int cycle_finish_cxn) {
+    ofstream runtime_file;
+    runtime_file.open(runtime_filepath, ios::app);
+    if (!runtime_file.is_open()) {
+        throw logic_error("Cannot Open File " + runtime_filepath);
+    }
     //  #  duration  waiting_num  route_num  connection_num
     runtime_file << "Cycle" << "\t";
     runtime_file << time_interval << "\t";
@@ -154,6 +154,7 @@ bool QNetwork::sample_cycle(int time_interval, int cycle_finish_route, int cycle
     runtime_file << cycle_finish_route << "\t";
     runtime_file << cycle_finish_cxn << endl;
     runtime_file << endl;
+    runtime_file.close();
     return true;
 }
 

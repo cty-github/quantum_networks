@@ -28,6 +28,8 @@ public:
     bool get_visit() const;
     void set_visit();
     QNode* get_next_node(int node_id) const;
+    QEdge* get_node_src_edge(int node_id) const;
+    QEdge* get_node_dst_edge(int node_id) const;
     int get_next_node_id(int node_id) const;
     int get_start_node_id() const;
     int get_end_node_id() const;

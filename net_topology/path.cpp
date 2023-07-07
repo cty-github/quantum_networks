@@ -64,6 +64,24 @@ QNode* Path::get_next_node(int node_id) const {
     return nullptr;
 }
 
+QEdge* Path::get_node_src_edge(int node_id) const {
+    for (int i = 0; i < edges.size(); i++) {
+        if (nodes[i]->get_id() == node_id) {
+            return edges[i];
+        }
+    }
+    return nullptr;
+}
+
+QEdge* Path::get_node_dst_edge(int node_id) const {
+    for (int i = 0; i < edges.size(); i++) {
+        if (nodes[i+1]->get_id() == node_id) {
+            return edges[i];
+        }
+    }
+    return nullptr;
+}
+
 int Path::get_next_node_id(int node_id) const {
     for (int i = 0; i < nodes.size(); i++) {
         if (nodes[i]->get_id() == node_id) {
