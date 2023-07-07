@@ -141,6 +141,10 @@ bool QNetwork::work_cycle(double run_time) {
     }
 }
 
+bool QNetwork::static_work_cycle() {
+
+}
+
 bool QNetwork::sample_cycle(int time_interval, int cycle_finish_route, int cycle_finish_cxn) {
     ofstream runtime_file;
     runtime_file.open(runtime_filepath, ios::app);
