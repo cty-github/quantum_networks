@@ -23,7 +23,6 @@ private:
 //    vector<vector<int>> serve_route_list; // list for routing assigned the rsrc
 public:
     RsrcTracker(RsrcType rsrc_type, int ne_id, int rsrc_num);
-    explicit RsrcTracker(RsrcTracker* rsrc_trkr);
     ~RsrcTracker();
     RsrcType get_rsrc_type() const;
     int get_ne_id() const;
@@ -34,7 +33,6 @@ public:
     int get_serve_route(int rsrc_id) const;
     int get_reuse_route(int rsrc_id) const;
     int get_free_num() const;
-    int get_soft_free_num() const;
     int get_route_total_rsrc_num(int route_id) const;
     queue<int> get_free_queue() const;
     queue<int> get_busy_queue_route(int route_id) const;
@@ -45,23 +43,10 @@ public:
 //    queue<int> get_serve_queue_route(int route_id) const;
     queue<int> get_soft_released_queue_route(int route_id) const;
     bool reserve_for_route(int route_id, int num);
-    bool reserve_soft_for_route(int route_id, int num);
-    map<int, int> preempt_for_route(int route_id, int num);
+    vector<int> preempt_for_route(int route_id, int num);
     bool hard_release_route(int route_id, int num);
     bool soft_release_route(int route_id, int num);
     bool release_route_all(int route_id);
-};
-
-class RouteUpdate {
-public:
-    map<int, int> link_gen_req; // {edge_id, add_request_num}
-    // for hs rsrc management
-    map<int, int> link_gen_rsrc;    // {edge_id, add_rsrc_num}
-    map<int, map<int, int>> preempted_route_edge_rsrc;  // {route_id, {edge_id, soft_num}}
-    map<int, map<int, int>> preempted_route_node_rsrc;  // {route_id, {edge_id, soft_num}}
-//    RouteUpdate();
-//    ~RouteUpdate();
-//    bool has_change() const;
 };
 
 class RsrcManager {
@@ -77,7 +62,7 @@ public:
     virtual bool release_node_memory(int node_id, int num, int route_id) = 0;
     virtual bool release_edge_channel(int edge_id, int num, int route_id) = 0;
     virtual bool check_link_resource(int s_id, int d_id, int num) const;
-    virtual int max_link_resource(int s_id, int d_id) = 0;
+    virtual int max_link_resource(int s_id, int d_id) const;
     virtual bool reserve_link_resource(int s_id, int d_id, int num, int route_id);
     virtual bool release_link_resource(int s_id, int d_id, int num, int route_id);
 };
@@ -96,7 +81,6 @@ public:
     bool reserve_edge_channel(int edge_id, int num, int route_id) override;
     bool release_node_memory(int node_id, int num, int route_id) override;
     bool release_edge_channel(int edge_id, int num, int route_id) override;
-    int max_link_resource(int s_id, int d_id) override;
 };
 
 class HsRsrcManager: public RsrcManager {
@@ -109,21 +93,14 @@ public:
     ~HsRsrcManager();
     int get_free_node_memory(int node_id) const override;
     int get_free_edge_channel(int edge_id) const override;
-    int get_soft_free_node_memory(int node_id) const;
-    int get_soft_free_edge_channel(int edge_id) const;
-    int get_total_free_node_memory(int node_id) const;
-    int get_total_free_edge_channel(int edge_id) const;
     bool reserve_node_memory(int node_id, int num, int route_id) override;
     bool reserve_edge_channel(int edge_id, int num, int route_id) override;
-    void reserve_soft_node_memory(int node_id, int num, int route_id);
-    void reserve_soft_edge_channel(int edge_id, int num, int route_id);
-    map<int, int> preempt_node_memory(int node_id, int num, int route_id);
-    map<int, int> preempt_edge_capacity(int edge_id, int num, int route_id);
+    vector<int> preempt_node_memory(int node_id, int num, int route_id);
+    vector<int> preempt_edge_capacity(int edge_id, int num, int route_id);
     bool release_node_memory(int node_id, int num, int route_id) override;
     bool release_edge_channel(int edge_id, int num, int route_id) override;
-    void soft_release_node_memory(int node_id, int num, int route_id);
-    void soft_release_edge_channel(int edge_id, int num, int route_id);
-    int max_link_resource(int s_id, int d_id) override;
+    bool soft_release_node_memory(int node_id, int num, int route_id);
+    bool soft_release_edge_channel(int edge_id, int num, int route_id);
 };
 
 #endif //QUANTUM_NETWORKS_NET_RESOURCE_H

@@ -8,20 +8,8 @@
 #include <algorithm>
 
 RsrcTracker::RsrcTracker(RsrcType rsrc_type, int ne_id, int rsrc_num):
-rsrc_type(rsrc_type),
-ne_id(ne_id),
-rsrc_num(rsrc_num),
-rsrc_status_list(rsrc_num, Free),
-rsrc_serve_route(rsrc_num, -1),
-rsrc_reuse_route(rsrc_num, -1) {}
-
-RsrcTracker::RsrcTracker(RsrcTracker* rsrc_trkr):
-rsrc_type(rsrc_trkr->rsrc_type),
-ne_id(rsrc_trkr->ne_id),
-rsrc_num(rsrc_trkr->rsrc_num),
-rsrc_status_list(rsrc_trkr->rsrc_status_list),
-rsrc_serve_route(rsrc_trkr->rsrc_serve_route),
-rsrc_reuse_route(rsrc_trkr->rsrc_reuse_route) {}
+rsrc_type(rsrc_type), ne_id(ne_id), rsrc_num(rsrc_num),
+rsrc_status_list(rsrc_num, Free), rsrc_serve_route(rsrc_num, -1), rsrc_reuse_route(rsrc_num, -1) {}
 
 RsrcTracker::~RsrcTracker() = default;
 
@@ -65,16 +53,6 @@ int RsrcTracker::get_free_num() const {
         }
     }
     return free_num;
-}
-
-int RsrcTracker::get_soft_free_num() const {
-    int soft_free_num = 0;
-    for (int i = 0; i < rsrc_num; i++) {
-        if (rsrc_status_list[i] == SoftFree) {
-            soft_free_num++;
-        }
-    }
-    return soft_free_num;
 }
 
 int RsrcTracker::get_route_total_rsrc_num(int route_id) const {
@@ -158,46 +136,34 @@ queue<int> RsrcTracker::get_soft_released_queue_route(int route_id) const {
 }
 
 bool RsrcTracker::reserve_for_route(int route_id, int num) {
-    // reserve hard resource for route
     queue<int> free_queue = get_free_queue();
-    if (free_queue.size() < num) {
-        string type = rsrc_type==Channel?"Edge":"Node";
-        throw logic_error("No Enough Free Hard Resource in " + type + " " + to_string(ne_id));
-    }
-    while (num--) {
-        int rsrc_id = free_queue.front();
-        rsrc_status_list[rsrc_id] = Busy;
-        rsrc_serve_route[rsrc_id] = route_id;
-        free_queue.pop();
-    }
-    return true;
-}
-
-bool RsrcTracker::reserve_soft_for_route(int route_id, int num) {
-    // reserve soft resource for route
     queue<int> soft_free_queue = get_soft_free_queue();
-    if (soft_free_queue.size() < num) {
-        string type = rsrc_type==Channel?"Edge":"Node";
-        throw logic_error("No Enough Free Soft Resource in " + type + " " + to_string(ne_id));
+    if (free_queue.size() + soft_free_queue.size() < num) {
+        throw logic_error("No Enough Free Resource");
     }
     while (num--) {
-        int rsrc_id = soft_free_queue.front();
-        rsrc_status_list[rsrc_id] = Reused;
-        rsrc_reuse_route[rsrc_id] = route_id;
-        soft_free_queue.pop();
+        if (!free_queue.empty()) {
+            int rsrc_id = free_queue.front();
+            rsrc_status_list[rsrc_id] = Busy;
+            rsrc_serve_route[rsrc_id] = route_id;
+            free_queue.pop();
+        } else {
+            int rsrc_id = soft_free_queue.front();
+            rsrc_status_list[rsrc_id] = Reused;
+            rsrc_reuse_route[rsrc_id] = route_id;
+            soft_free_queue.pop();
+        }
     }
     return true;
 }
 
-map<int, int> RsrcTracker::preempt_for_route(int route_id, int num) {
+vector<int> RsrcTracker::preempt_for_route(int route_id, int num) {
     queue<int> soft_free_queue = get_soft_free_queue_route(route_id);
     queue<int> reused_queue = get_reused_queue_route(route_id);
     if (soft_free_queue.size() + reused_queue.size() < num) {
-        string type = rsrc_type==Channel?"Edge":"Node";
-        throw logic_error("Route " + to_string(route_id)
-        + " Preempt Exceed Occupied Resource in " + type + " " + to_string(ne_id));
+        throw logic_error("Preempt Exceed Occupied Resource");
     }
-    map<int, int> preempted_route_rsrc;
+    queue<int> preempted_route;
     while (num--) {
         if (!soft_free_queue.empty()) {
             int rsrc_id = soft_free_queue.front();
@@ -205,28 +171,28 @@ map<int, int> RsrcTracker::preempt_for_route(int route_id, int num) {
             soft_free_queue.pop();
         } else {
             int rsrc_id = reused_queue.front();
-            preempted_route_rsrc[rsrc_reuse_route[rsrc_id]]++;
+            preempted_route.push(rsrc_reuse_route[rsrc_id]);
             rsrc_status_list[rsrc_id] = Busy;
             rsrc_reuse_route[rsrc_id] = -1;
             reused_queue.pop();
         }
     }
-//    vector<int> stop_route;
-//    while (!preempted_route.empty()) {
-//        int preempted_route_id = preempted_route.front();
-//        int rest_rsrc_num = get_route_total_rsrc_num(preempted_route_id);
-//        if (rsrc_type == Channel || rsrc_type == UserMemory) {
-//            if (rest_rsrc_num <= 0) {
-//                stop_route.push_back(preempted_route_id);
-//            }
-//        } else if (rsrc_type == RptrMemory) {
-//            if (rest_rsrc_num <=1) {
-//                stop_route.push_back(preempted_route_id);
-//            }
-//        }
-//        preempted_route.pop();
-//    }
-    return preempted_route_rsrc;
+    vector<int> stop_route;
+    while (!preempted_route.empty()) {
+        int preempted_route_id = preempted_route.front();
+        int rest_rsrc_num = get_route_total_rsrc_num(preempted_route_id);
+        if (rsrc_type == Channel || rsrc_type == UserMemory) {
+            if (rest_rsrc_num <= 0) {
+                stop_route.push_back(preempted_route_id);
+            }
+        } else if (rsrc_type == RptrMemory) {
+            if (rest_rsrc_num <=1) {
+                stop_route.push_back(preempted_route_id);
+            }
+        }
+        preempted_route.pop();
+    }
+    return stop_route;
 }
 
 bool RsrcTracker::hard_release_route(int route_id, int num) {
@@ -235,9 +201,7 @@ bool RsrcTracker::hard_release_route(int route_id, int num) {
     queue<int> soft_released_queue = get_soft_free_queue_route(route_id);
     queue<int> busy_queue = get_busy_queue_route(route_id);
     if (reusing_queue.size() + reused_queue.size() + soft_released_queue.size() + busy_queue.size() < num) {
-        string type = rsrc_type==Channel?"Edge":"Node";
-        throw logic_error("Route " + to_string(route_id)
-        + " Hard Release Exceed Occupied Resource in " + type + " " + to_string(ne_id));
+        throw logic_error("Hard Release Exceed Occupied Resource");
     }
     while (num--) {
         if (!reusing_queue.empty()) {
@@ -270,9 +234,7 @@ bool RsrcTracker::soft_release_route(int route_id, int num) {
     // soft release hard resource of route id
     queue<int> busy_queue = get_busy_queue_route(route_id);
     if (busy_queue.size() < num) {
-        string type = rsrc_type==Channel?"Edge":"Node";
-        throw logic_error("Route " + to_string(route_id)
-        + " Soft Release Exceed Hard Resource in " + type + " " + to_string(ne_id));
+        throw logic_error("Soft Release Exceed Hard Resource");
     }
     while (num--) {
         int rsrc_id = busy_queue.front();
@@ -320,6 +282,30 @@ bool RsrcManager::check_link_resource(int s_id, int d_id, int num) const {
         return false;
     }
     return true;
+}
+
+int RsrcManager::max_link_resource(int s_id, int d_id) const {
+    int edge_id = net_topo->get_edge(s_id, d_id)->get_edge_id();
+    int max_num = get_free_edge_channel(edge_id);
+    if (net_topo->get_node(s_id)->is_user()) {
+        if (max_num > get_free_node_memory(s_id)) {
+            max_num = get_free_node_memory(s_id);
+        }
+    } else {
+        if (max_num > get_free_node_memory(s_id)/2) {
+            max_num = get_free_node_memory(s_id)/2;
+        }
+    }
+    if (net_topo->get_node(d_id)->is_user()) {
+        if (max_num > get_free_node_memory(d_id)) {
+            max_num = get_free_node_memory(d_id);
+        }
+    } else {
+        if (max_num > get_free_node_memory(d_id)/2) {
+            max_num = get_free_node_memory(d_id)/2;
+        }
+    }
+    return max_num;
 }
 
 bool RsrcManager::reserve_link_resource(int s_id, int d_id, int num, int route_id) {
@@ -424,30 +410,6 @@ bool BasicRsrcManager::release_edge_channel(int edge_id, int num, int route_id) 
     return true;
 }
 
-int BasicRsrcManager::max_link_resource(int s_id, int d_id)  {
-    int edge_id = net_topo->get_edge(s_id, d_id)->get_edge_id();
-    int max_num = get_free_edge_channel(edge_id);
-    if (net_topo->get_node(s_id)->is_user()) {
-        if (max_num > get_free_node_memory(s_id)) {
-            max_num = get_free_node_memory(s_id);
-        }
-    } else {
-        if (max_num > get_free_node_memory(s_id)/2) {
-            max_num = get_free_node_memory(s_id)/2;
-        }
-    }
-    if (net_topo->get_node(d_id)->is_user()) {
-        if (max_num > get_free_node_memory(d_id)) {
-            max_num = get_free_node_memory(d_id);
-        }
-    } else {
-        if (max_num > get_free_node_memory(d_id)/2) {
-            max_num = get_free_node_memory(d_id)/2;
-        }
-    }
-    return max_num;
-}
-
 HsRsrcManager::HsRsrcManager(NetTopology* net_topo): RsrcManager(net_topo) {
     for (int i = 0; i < net_topo->get_node_num(); i++) {
         node_memory_tracker[i] = new RsrcTracker(UserMemory, i,
@@ -459,24 +421,10 @@ HsRsrcManager::HsRsrcManager(NetTopology* net_topo): RsrcManager(net_topo) {
     }
 }
 
-HsRsrcManager::HsRsrcManager(HsRsrcManager* rsrc_mgr): RsrcManager(rsrc_mgr->net_topo) {
-    for (int i = 0; i < net_topo->get_node_num(); i++) {
-        node_memory_tracker[i] = new RsrcTracker(rsrc_mgr->node_memory_tracker[i]);
-    }
-    for (int i = 0; i < net_topo->get_edge_num(); i++) {
-        edge_channel_tracker[i] = new RsrcTracker(rsrc_mgr->edge_channel_tracker[i]);
-    }
-}
+HsRsrcManager::HsRsrcManager(HsRsrcManager* rsrc_mgr): RsrcManager(rsrc_mgr->net_topo),
+node_memory_tracker(rsrc_mgr->node_memory_tracker), edge_channel_tracker(rsrc_mgr->edge_channel_tracker) {}
 
-HsRsrcManager::~HsRsrcManager() {
-    cout << "Deconstruct Hs Manager" << endl;
-    for (int i = 0; i < net_topo->get_node_num(); i++) {
-        delete node_memory_tracker[i];
-    }
-    for (int i = 0; i < net_topo->get_edge_num(); i++) {
-        delete edge_channel_tracker[i];
-    }
-}
+HsRsrcManager::~HsRsrcManager() = default;
 
 int HsRsrcManager::get_free_node_memory(int node_id) const {
     if (node_memory_tracker.find(node_id) == node_memory_tracker.end()) {
@@ -492,33 +440,10 @@ int HsRsrcManager::get_free_edge_channel(int edge_id) const {
     return edge_channel_tracker.find(edge_id)->second->get_free_num();
 }
 
-int HsRsrcManager::get_soft_free_node_memory(int node_id) const {
-    if (node_memory_tracker.find(node_id) == node_memory_tracker.end()) {
-        throw logic_error("No Node " + to_string(node_id));
-    }
-    return node_memory_tracker.find(node_id)->second->get_soft_free_num();
-}
-
-int HsRsrcManager::get_soft_free_edge_channel(int edge_id) const {
-    if (edge_channel_tracker.find(edge_id) == edge_channel_tracker.end()) {
-        throw logic_error("No Edge " + to_string(edge_id));
-    }
-    return edge_channel_tracker.find(edge_id)->second->get_soft_free_num();
-}
-
-int HsRsrcManager::get_total_free_node_memory(int node_id) const {
-    return get_free_node_memory(node_id) + get_soft_free_node_memory(node_id);
-}
-
-int HsRsrcManager::get_total_free_edge_channel(int edge_id) const {
-    return get_free_edge_channel(edge_id) + get_soft_free_edge_channel(edge_id);
-}
-
 bool HsRsrcManager::reserve_node_memory(int node_id, int num, int route_id) {
     if (node_memory_tracker.find(node_id) == node_memory_tracker.end()) {
         throw logic_error("No Node " + to_string(node_id));
     }
-    cout << "Reserve " << to_string(num) << " Hard Resource in Node " << to_string(node_id) << endl;
     return node_memory_tracker[node_id]->reserve_for_route(route_id, num);
 }
 
@@ -526,65 +451,45 @@ bool HsRsrcManager::reserve_edge_channel(int edge_id, int num, int route_id) {
     if (edge_channel_tracker.find(edge_id) == edge_channel_tracker.end()) {
         throw logic_error("No Edge " + to_string(edge_id));
     }
-    cout << "Reserve " << to_string(num) << " Hard Resource in Edge " << to_string(edge_id) << endl;
     return edge_channel_tracker[edge_id]->reserve_for_route(route_id, num);
 }
 
-void HsRsrcManager::reserve_soft_node_memory(int node_id, int num, int route_id) {
+vector<int> HsRsrcManager::preempt_node_memory(int node_id, int num, int route_id) {
     if (node_memory_tracker.find(node_id) == node_memory_tracker.end()) {
         throw logic_error("No Node " + to_string(node_id));
     }
-    cout << "Reserve " << to_string(num) << " Soft Resource in Node " << to_string(node_id) << endl;
-    node_memory_tracker[node_id]->reserve_soft_for_route(route_id, num);
+    vector<int> stop_route = node_memory_tracker[node_id]->preempt_for_route(route_id, num);
+    for (auto stop_id:stop_route) {
+        for (auto track:node_memory_tracker) {
+            track.second->release_route_all(stop_id);
+        }
+        for (auto track:edge_channel_tracker) {
+            track.second->release_route_all(stop_id);
+        }
+    }
+    return stop_route;
 }
 
-void HsRsrcManager::reserve_soft_edge_channel(int edge_id, int num, int route_id) {
+vector<int> HsRsrcManager::preempt_edge_capacity(int edge_id, int num, int route_id) {
     if (edge_channel_tracker.find(edge_id) == edge_channel_tracker.end()) {
         throw logic_error("No Edge " + to_string(edge_id));
     }
-    cout << "Reserve " << to_string(num) << " Soft Resource in Edge " << to_string(edge_id) << endl;
-    edge_channel_tracker[edge_id]->reserve_soft_for_route(route_id, num);
-}
-
-map<int, int> HsRsrcManager::preempt_node_memory(int node_id, int num, int route_id) {
-    if (node_memory_tracker.find(node_id) == node_memory_tracker.end()) {
-        throw logic_error("No Node " + to_string(node_id));
+    vector<int> stop_route = edge_channel_tracker[edge_id]->preempt_for_route(route_id, num);
+    for (auto stop_id:stop_route) {
+        for (auto track:node_memory_tracker) {
+            track.second->release_route_all(stop_id);
+        }
+        for (auto track:edge_channel_tracker) {
+            track.second->release_route_all(stop_id);
+        }
     }
-    cout << "Preempt " << to_string(num) << " Resource in Node " << to_string(node_id) << endl;
-    map<int, int> preempted_route_rsrc = node_memory_tracker[node_id]->preempt_for_route(route_id, num);
-//    for (auto stop_id:preempted_route_rsrc) {
-//        for (auto track:node_memory_tracker) {
-//            track.second->release_route_all(stop_id);
-//        }
-//        for (auto track:edge_channel_tracker) {
-//            track.second->release_route_all(stop_id);
-//        }
-//    }
-    return preempted_route_rsrc;
-}
-
-map<int, int> HsRsrcManager::preempt_edge_capacity(int edge_id, int num, int route_id) {
-    if (edge_channel_tracker.find(edge_id) == edge_channel_tracker.end()) {
-        throw logic_error("No Edge " + to_string(edge_id));
-    }
-    cout << "Preempt " << to_string(num) << " Resource in Edge " << to_string(edge_id) << endl;
-    map<int, int> preempted_route_rsrc = edge_channel_tracker[edge_id]->preempt_for_route(route_id, num);
-//    for (auto stop_id:preempted_route_rsrc) {
-//        for (auto track:node_memory_tracker) {
-//            track.second->release_route_all(stop_id);
-//        }
-//        for (auto track:edge_channel_tracker) {
-//            track.second->release_route_all(stop_id);
-//        }
-//    }
-    return preempted_route_rsrc;
+    return stop_route;
 }
 
 bool HsRsrcManager::release_node_memory(int node_id, int num, int route_id) {
     if (node_memory_tracker.find(node_id) == node_memory_tracker.end()) {
         throw logic_error("No Node " + to_string(node_id));
     }
-    cout << "Hard Release " << to_string(num) << " Resource in Node " << to_string(node_id) << endl;
     return node_memory_tracker[node_id]->hard_release_route(route_id, num);
 }
 
@@ -592,46 +497,19 @@ bool HsRsrcManager::release_edge_channel(int edge_id, int num, int route_id) {
     if (edge_channel_tracker.find(edge_id) == edge_channel_tracker.end()) {
         throw logic_error("No Edge " + to_string(edge_id));
     }
-    cout << "Hard Release " << to_string(num) << " Resource in Edge " << to_string(edge_id) << endl;
     return edge_channel_tracker[edge_id]->hard_release_route(route_id, num);
 }
 
-void HsRsrcManager::soft_release_node_memory(int node_id, int num, int route_id) {
+bool HsRsrcManager::soft_release_node_memory(int node_id, int num, int route_id) {
     if (node_memory_tracker.find(node_id) == node_memory_tracker.end()) {
         throw logic_error("No Node " + to_string(node_id));
     }
-    cout << "Soft Release " << to_string(num) << " Resource in Node " << to_string(node_id) << endl;
-    node_memory_tracker[node_id]->soft_release_route(route_id, num);
+    return node_memory_tracker[node_id]->soft_release_route(route_id, num);
 }
 
-void HsRsrcManager::soft_release_edge_channel(int edge_id, int num, int route_id) {
+bool HsRsrcManager::soft_release_edge_channel(int edge_id, int num, int route_id) {
     if (edge_channel_tracker.find(edge_id) == edge_channel_tracker.end()) {
         throw logic_error("No Edge " + to_string(edge_id));
     }
-    cout << "Soft Release " << to_string(num) << " Resource in Edge " << to_string(edge_id) << endl;
-    edge_channel_tracker[edge_id]->soft_release_route(route_id, num);
-}
-
-int HsRsrcManager::max_link_resource(int s_id, int d_id) {
-    int edge_id = net_topo->get_edge(s_id, d_id)->get_edge_id();
-    int max_num = get_total_free_edge_channel(edge_id);
-    if (net_topo->get_node(s_id)->is_user()) {
-        if (max_num > get_total_free_node_memory(s_id)) {
-            max_num = get_total_free_node_memory(s_id);
-        }
-    } else {
-        if (max_num > get_total_free_node_memory(s_id)/2) {
-            max_num = get_total_free_node_memory(s_id)/2;
-        }
-    }
-    if (net_topo->get_node(d_id)->is_user()) {
-        if (max_num > get_total_free_node_memory(d_id)) {
-            max_num = get_total_free_node_memory(d_id);
-        }
-    } else {
-        if (max_num > get_total_free_node_memory(d_id)/2) {
-            max_num = get_total_free_node_memory(d_id)/2;
-        }
-    }
-    return max_num;
+    return edge_channel_tracker[edge_id]->soft_release_route(route_id, num);
 }

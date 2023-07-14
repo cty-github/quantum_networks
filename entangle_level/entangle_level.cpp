@@ -102,10 +102,7 @@ etg_link(etg_link), s_id(s_id), d_id(d_id), path(path) {}
 EntangleSegment::EntangleSegment(EntangleSegment* etg_seg):
 etg_link(etg_seg->etg_link), s_id(etg_seg->s_id), d_id(etg_seg->d_id), path(etg_seg->path) {}
 
-EntangleSegment::~EntangleSegment() {
-    delete etg_link;
-    delete path;
-}
+EntangleSegment::~EntangleSegment() = default;
 
 EntangleLink* EntangleSegment::get_etg_link() const {
     return etg_link;

@@ -26,7 +26,8 @@ private:
     map<int, UserRequest*> waiting_requests;
     map<int, UserRequest*> processing_requests;
     map<int, UserRequest*> serving_requests;
-    RsrcManager* net_rsrc;  // union{BasicRsrcManager* basic; HsRsrcManager* hs;} net_rsrc;
+    RsrcManager* net_rsrc;
+//    union{BasicRsrcManager* basic; HsRsrcManager* hs;} net_rsrc;
     RouteManager* route_manager;
     map<int, UserConnection*> user_connections;
 public:
@@ -51,15 +52,14 @@ public:
     vector<UserRequest*> random_request(int time, double time_prob, double sd_prob, double req_rate);
     void add_new_requests(const vector<UserRequest*>& new_requests);
     void reserve_resource(RouteProject* route_proj);
-    vector<RouteProject*> greedy_routing_projects(BasicRsrcManager* tmp_rsrc) const;
-    vector<RouteProject*> greedy_routing_projects(HsRsrcManager* tmp_rsrc) const;
-    vector<RouteProject*> optimal_routing_projects(BasicRsrcManager* tmp_rsrc) const;
-    vector<RouteProject*> optimal_routing_projects(HsRsrcManager* tmp_rsrc) const;
+    vector<RouteProject*> greedy_routing_projects(RsrcManager* tmp_rsrc) const;
+    vector<RouteProject*> heuristic_routing_projects(RsrcManager* tmp_rsrc) const;
     vector<RouteProject*> calculate_new_routings(RsrcManager* tmp_rsrc) const;
     void schedule_new_routings();
     void refresh_routing_state(int time);
     int check_success_routing(const string& runtime_filepath);
     int finish_user_connection(int time);
+    static double calculate_obj(UserRequest* request, Path* path);
 };
 
 #endif //QUANTUM_NETWORKS_NET_MANAGER_H

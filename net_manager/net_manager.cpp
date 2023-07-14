@@ -9,9 +9,7 @@
 #include <sstream>
 #include <iostream>
 #include <iomanip>
-
-extern int ROUTE_STRTG;
-extern int RSRC_MANAGE;
+#include <algorithm>
 
 NetManager::NetManager(NetTopology* net_topo, int user_num): net_topo(net_topo) {
     double request_rate = SD_RATIO/user_num;
@@ -159,9 +157,9 @@ int NetManager::get_waiting_num() const {
 
 void NetManager::print_waiting_requests() const {
     cout << "- Waiting Requests" << endl;
-    for (auto request:waiting_requests) {
-        request.second->print_request();
-    }
+//    for (auto request:waiting_requests) {
+//        request.second->print_request();
+//    }
     cout << "Waiting Num: " << get_waiting_num() << endl;
 }
 
@@ -248,35 +246,17 @@ void NetManager::add_new_requests(const vector<UserRequest*>& new_requests) {
 }
 
 void NetManager::reserve_resource(RouteProject* route_proj) {
-    cout << "Reserve Resource of Route " << route_proj->get_route_id() << endl;
-    int route_id = route_proj->get_route_id();
+//    cout << "Reserve Resource of Route " << route_proj->get_route_id() << endl;
     for (auto it:route_proj->get_link_projs()) {
-        int edge_id = it.first;
         LinkProject* link_proj = it.second;
-        if (RSRC_MANAGE == 0) {
-            net_rsrc->reserve_link_resource(link_proj->get_s_node_id(), link_proj->get_d_node_id(),
-                                            link_proj->get_total_rsrc_num(), route_id);
-        } else if (RSRC_MANAGE == 1) {
-            auto hs_rsrc = (HsRsrcManager*)net_rsrc;
-            hs_rsrc->reserve_edge_channel(edge_id, link_proj->get_edge_rsrc().first, route_id);
-            hs_rsrc->reserve_soft_edge_channel(edge_id, link_proj->get_edge_rsrc().second, route_id);
-            hs_rsrc->reserve_node_memory(link_proj->get_s_node_id(),
-                                         link_proj->get_src_rsrc().first,
-                                         route_id);
-            hs_rsrc->reserve_soft_node_memory(link_proj->get_s_node_id(),
-                                              link_proj->get_src_rsrc().second,
-                                              route_id);
-            hs_rsrc->reserve_node_memory(link_proj->get_d_node_id(),
-                                         link_proj->get_dst_rsrc().first,
-                                         route_id);
-            hs_rsrc->reserve_soft_node_memory(link_proj->get_d_node_id(),
-                                              link_proj->get_dst_rsrc().second,
-                                              route_id);
-        }
+        net_rsrc->reserve_link_resource(link_proj->get_s_node_id(),
+                                        link_proj->get_d_node_id(),
+                                        link_proj->get_total_rsrc_num(),
+                                        route_proj->get_route_id());
     }
 }
 
-vector<RouteProject*> NetManager::greedy_routing_projects(BasicRsrcManager* tmp_rsrc) const {
+vector<RouteProject*> NetManager::greedy_routing_projects(RsrcManager* tmp_rsrc) const {
     // greedy realization for test
     vector<RouteProject*> new_route_projects;
     for (auto it_wait:waiting_requests) {
@@ -315,81 +295,92 @@ vector<RouteProject*> NetManager::greedy_routing_projects(BasicRsrcManager* tmp_
     return new_route_projects;
 }
 
-vector<RouteProject*> NetManager::greedy_routing_projects(HsRsrcManager* tmp_rsrc) const {
-    // greedy realization for test
+vector<RouteProject *> NetManager::heuristic_routing_projects(RsrcManager *tmp_rsrc) const {
+    // solve as optimal problem
     vector<RouteProject*> new_route_projects;
-    for (auto it_wait:waiting_requests) {
-        UserRequest* serve_request = it_wait.second;
-        int pair_id = serve_request->get_pair_id();
-        for (auto path:candidate_paths.find(pair_id)->second) {
-            vector<QEdge*> edges = path->get_edges();
-            int rsrc_num;
-            for (int i = 0; i < edges.size(); i++) {
-                int node_id_a = edges[i]->get_node_id_a();
-                int node_id_b = edges[i]->get_node_id_b();
-                int max_num = tmp_rsrc->max_link_resource(node_id_a, node_id_b);
-                if (i == 0) {
-                    rsrc_num = max_num;
+
+    // vectorize waiting requests map
+    int num_requests = (int)waiting_requests.size();
+    vector<int> request_ids;
+    request_ids.reserve(waiting_requests.size());
+    for (auto it: waiting_requests) {
+        request_ids.push_back(it.first);
+    }
+
+    // get the number of selected requests
+    int num_select = NUM_SELECTED_REQUESTS > num_requests ? num_requests : NUM_SELECTED_REQUESTS;
+    double max_obj_value = 0;
+    for (int k = 0; k < NUM_REPEATS; k++) {
+        auto* tmp_rsrc_copy = new BasicRsrcManager((BasicRsrcManager*)tmp_rsrc);
+        int current_route_id = RouteProject::get_next_id();
+        shuffle(request_ids.begin(), request_ids.end(), rand_eng);
+        double obj_value = 0;
+        vector<RouteProject*> current_route_projects;
+        for (int i = 0; i < num_select; ++i) {
+            UserRequest* serve_request = waiting_requests.find(request_ids[i])->second;
+            int pair_id = serve_request->get_pair_id();
+            for (auto path:candidate_paths.find(pair_id)->second) {
+                vector<QEdge*> edges = path->get_edges();
+                int rsrc_num;
+                for (int j = 0; j < edges.size(); j++) {
+                    int node_id_a = edges[j]->get_node_id_a();
+                    int node_id_b = edges[j]->get_node_id_b();
+                    int max_num = tmp_rsrc_copy->max_link_resource(node_id_a, node_id_b);
+                    if (j == 0) {
+                        rsrc_num = max_num;
+                    }
+                    if (max_num < rsrc_num) {
+                        rsrc_num = max_num;
+                    }
                 }
-                if (max_num < rsrc_num) {
-                    rsrc_num = max_num;
+                if (rsrc_num) {
+                    obj_value += calculate_obj(serve_request, path);
+                    auto* route_proj = new RouteProject(current_route_id,
+                                                        rsrc_num, path, serve_request);
+                    current_route_id++;
+                    current_route_projects.push_back(route_proj);
+                    for (auto it:route_proj->get_link_projs()) {
+                        LinkProject* link_proj = it.second;
+                        tmp_rsrc_copy->reserve_link_resource(link_proj->get_s_node_id(),
+                                                             link_proj->get_d_node_id(),
+                                                             link_proj->get_total_rsrc_num(),
+                                                             route_proj->get_route_id());
+                    }
+                    break;
                 }
             }
-            if (rsrc_num) {
-                auto* route_proj = new RouteProject(RouteProject::get_next_id(), rsrc_num, path,
-                                                    serve_request, tmp_rsrc);
-                RouteProject::add_next_id();
-                new_route_projects.push_back(route_proj);
-                break;
+            if (max_obj_value < obj_value) {
+                max_obj_value = obj_value;
+                new_route_projects = current_route_projects;
             }
+        }
+    }
+    for (auto it_rp: new_route_projects) {
+        RouteProject::add_next_id();
+        for (auto it: it_rp->get_link_projs()) {
+            LinkProject* link_proj = it.second;
+            tmp_rsrc->reserve_link_resource(link_proj->get_s_node_id(),
+                                            link_proj->get_d_node_id(),
+                                            link_proj->get_total_rsrc_num(),
+                                            it_rp->get_route_id());
         }
     }
     return new_route_projects;
 }
 
-vector<RouteProject*> NetManager::optimal_routing_projects(BasicRsrcManager* tmp_rsrc) const {
-    // solve as optimal problem
-    vector<RouteProject*> new_route_projects;
-    vector<bool> satisfy;
-    vector<Path*> select_path;
-
-    return new_route_projects;
-}
-
-vector<RouteProject*> NetManager::optimal_routing_projects(HsRsrcManager* tmp_rsrc) const {
-    // solve as optimal problem
-    vector<RouteProject*> new_route_projects;
-    vector<bool> satisfy;
-    vector<Path*> select_path;
-    return new_route_projects;
-}
-
 vector<RouteProject*> NetManager::calculate_new_routings(RsrcManager* tmp_rsrc) const {
-    cout << "- Calculate New Routing Projects" << endl;
     vector<RouteProject*> new_route_projects;
     switch (ROUTE_STRTG) {
         case 0: {
-            if (RSRC_MANAGE == 0) {
-                new_route_projects = greedy_routing_projects((BasicRsrcManager*)tmp_rsrc);
-            } else if (RSRC_MANAGE == 1) {
-                new_route_projects = greedy_routing_projects((HsRsrcManager*)tmp_rsrc);
-            } else {
-                throw logic_error("Unknown Resource Management");
-            }
+            new_route_projects = greedy_routing_projects(tmp_rsrc);
             break;
         }
         case 1: {
-            if (RSRC_MANAGE == 0) {
-                new_route_projects = optimal_routing_projects((BasicRsrcManager*)tmp_rsrc);
-            } else if (RSRC_MANAGE == 1) {
-                new_route_projects = optimal_routing_projects((HsRsrcManager*)tmp_rsrc);
-            } else {
-                throw logic_error("Unknown Resource Management");
-            }
+            new_route_projects = heuristic_routing_projects(tmp_rsrc);
             break;
         }
         default: {
-            throw logic_error("Unknown Routing Strategy");
+            throw logic_error("Unknown ROUTE_STRTG");
         }
     }
     return new_route_projects;
@@ -408,13 +399,10 @@ void NetManager::schedule_new_routings() {
             break;
         }
         default: {
-            throw logic_error("Unknown Routing Strategy");
+            throw logic_error("Unknown RSRC_MANAGE");
         }
     }
     vector<RouteProject*> new_route_projects = calculate_new_routings(tmp_rsrc);
-    for (auto route_proj:new_route_projects) {
-        route_proj->print_route_proj();
-    }
     switch (RSRC_MANAGE) {
         case 0: {
             delete (BasicRsrcManager*)tmp_rsrc;
@@ -425,11 +413,9 @@ void NetManager::schedule_new_routings() {
             break;
         }
         default: {
-            throw logic_error("Unknown Routing Strategy");
+            throw logic_error("Unknown RSRC_MANAGE");
         }
     }
-
-    cout << "- Deploy New Routing Projects" << endl;
     for (auto new_route_proj:new_route_projects) {
         reserve_resource(new_route_proj);
         UserRequest* request = new_route_proj->get_request();
@@ -447,9 +433,9 @@ void NetManager::schedule_new_routings() {
 }
 
 void NetManager::refresh_routing_state(int time) {
-    cout << "- Refresh Routing States" << endl;
     if (route_manager == nullptr) {
-        throw logic_error("No Route Manager");
+        cout << "No Route Manager" << endl;
+        return;
     }
     switch (RSRC_MANAGE) {
         case 0: {
@@ -461,7 +447,7 @@ void NetManager::refresh_routing_state(int time) {
             break;
         }
         default: {
-            throw logic_error("Unknown Resource Management");
+            throw logic_error("Unknown RSRC_MANAGE");
         }
     }
 }
@@ -541,4 +527,15 @@ int NetManager::finish_user_connection(int time) {
         user_connections.erase(request_id);
     }
     return (int)finished_request.size();
+}
+
+double NetManager::calculate_obj(UserRequest* request, Path* path) {
+    vector<QEdge*> edges = path->get_edges();
+    int wait_time = get_time_interval(get_current_time(), request->get_request_time());
+    double p = 1;
+    for (auto edge : edges) {
+        p *= edge->get_success_rate() * edge->get_channel_capacity();
+    }
+    double e_slot = 1 / (pow(NUM_TRIES, edges.size() - 1) * p);
+    return wait_time / e_slot;
 }

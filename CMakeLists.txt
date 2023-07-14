@@ -2,9 +2,14 @@ cmake_minimum_required(VERSION 3.24)
 project(quantum_networks)
 
 set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_EXE_LINKER_FLAGS "-Wl,-stack_size,0x20000000")
 
-include_directories(.)
+include_directories(
+        .
+        /Applications/CPLEX_Studio_Community2211/concert/include
+        /Applications/CPLEX_Studio_Community2211/cplex/include)
+link_directories(
+        /Applications/CPLEX_Studio_Community2211/concert/lib/x86-64_osx/static_pic
+        /Applications/CPLEX_Studio_Community2211/cplex/lib/x86-64_osx/static_pic)
 
 add_executable(quantum_networks
         main.cpp

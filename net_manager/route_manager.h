@@ -27,18 +27,18 @@ private:
     UserConnection* user_cxn;
     static int next_id;
 public:
-    RouteProject(int route_id, int rsrc_num, Path* path, UserRequest* request, HsRsrcManager* net_rsrc=nullptr);
+    RouteProject(int route_id, int rsrc_num, Path* path, UserRequest* request);
     ~RouteProject();
     int get_route_id() const;
     map<int, LinkProject*> get_link_projs();
     Path* get_path();
     UserRequest* get_request();
     void add_links(int edge_id, vector<EntangleLink*> links);
-    RouteUpdate update_entangles(int time, HsRsrcManager* net_rsrc=nullptr);
-    RouteUpdate purify_available_links(HsRsrcManager* net_rsrc=nullptr);
-    RouteUpdate swap_all_connected(HsRsrcManager* net_rsrc=nullptr);
+    map<int, int> update_entangles(int time);
+    map<int, int> purify_available_links(HsRsrcManager* net_rsrc=nullptr);
+    map<int, int> swap_all_connected(HsRsrcManager* net_rsrc=nullptr);
     bool check_user_connection();
-    EntangleConnection* generate_connection();
+    EntangleConnection* generate_connection(HsRsrcManager* net_rsrc=nullptr);
     bool is_success() const;
     void set_success(EntangleConnection* etg_cxn);
     UserConnection* get_user_cxn() const;
