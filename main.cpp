@@ -3,8 +3,10 @@
 #include <sys/stat.h>
 #include "qnetwork.h"
 #include "test_params.h"
+#include <filesystem>
 
 using namespace std;
+using namespace std::__fs::filesystem;
 
 int main() {
     string proj_path = "/Users/chutianyao/Data/Quantum Technology and Device/Quantum Networks/code/quantum_networks/";
@@ -30,7 +32,19 @@ int main() {
                       test_path+"sd_pair_"+current_time_stamp+".txt");
 
     qnetwork.initialize(CANDIDATE_NUM);
-    while (qnetwork.work_cycle(RUN_TIME)) {}
+    switch (WORK_CYCLE) {
+        case 0: {
+            while (qnetwork.dynamic_cycle()) {}
+            break;
+        }
+        case 1: {
+            while (qnetwork.static_cycle()) {}
+            break;
+        }
+        default: {
+            throw logic_error("Unknown WORK_CYCLE");
+        }
+    }
     qnetwork.finish();
 
     return 0;

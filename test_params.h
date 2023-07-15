@@ -19,7 +19,7 @@
 #define CAP_UP 7
 
 // device parameters
-#define PTN_DECAY_RATE 0.002
+#define PTN_DECAY_RATE 0.001
 #define PTN_FIDE 0.99
 #define BSM_SUCCESS_RATE 1.0
 #define BSM_Z_FIDE 0.999
@@ -32,6 +32,7 @@
 #define SAMPLE_INT 1000
 
 // realization methods
+#define WORK_CYCLE  1   // work cycle type
 #define ROUTE_STRTG 0   // route strategy type
 #define RSRC_MANAGE 0   // net rsrc manager type
 

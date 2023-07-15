@@ -91,7 +91,7 @@ bool QNetwork::initialize(int k) {
     return initialize_res;
 }
 
-bool QNetwork::work_cycle(double run_time) {
+bool QNetwork::dynamic_cycle() {
     ClockTime last_time_point = current_time_point;
     current_time_point = get_current_time();
     int time_interval = get_time_interval(current_time_point, last_time_point);
@@ -120,7 +120,7 @@ bool QNetwork::work_cycle(double run_time) {
 //    cout << endl;
 
     int sample_time_interval = get_time_interval(current_time_point, sample_time_point);
-    if (get_time_second(current_time_point, start_time_point) > run_time) {
+    if (get_time_second(current_time_point, start_time_point) > RUN_TIME) {
         sample_cycle(sample_time_interval, sample_route_num, sample_cxn_num);
         sample_route_num = 0;
         sample_cxn_num = 0;
@@ -136,8 +136,50 @@ bool QNetwork::work_cycle(double run_time) {
     }
 }
 
-bool QNetwork::static_work_cycle() {
-    return false;
+bool QNetwork::static_cycle() {
+    ClockTime last_time_point = current_time_point;
+    current_time_point = get_current_time();
+    int time_interval = get_time_interval(current_time_point, last_time_point);
+
+    //  ----- Requests Phase -----
+    vector<UserRequest*> new_requests = net_manager->random_request(time_interval, TIME_PROB,
+                                                                    SD_PROB, REQ_RATE);
+    net_manager->add_new_requests(new_requests);
+
+    //  ----- Routings Phase -----
+    int new_routing_num;
+    new_routing_num = net_manager->static_schedule_new_routings();
+    if (new_routing_num) {
+        cout << "Create " << new_routing_num << " Route Project" << endl;
+    }
+    net_manager->refresh_routing_state(time_interval);
+
+    //  ----- Services Phase -----
+    int cycle_finish_route = net_manager->static_check_success_routing(runtime_filepath, RUN_TIME);
+    sample_route_num += cycle_finish_route;
+    finished_route_num += cycle_finish_route;
+//    net_manager->print_serving_requests();
+//    net_manager->print_user_connections();
+    int cycle_finish_cxn = net_manager->finish_user_connection(time_interval);
+    sample_cxn_num += cycle_finish_cxn;
+    finished_cxn_num += cycle_finish_cxn;
+//    cout << endl;
+
+    int sample_time_interval = get_time_interval(current_time_point, sample_time_point);
+    if (get_time_second(current_time_point, start_time_point) > RUN_TIME) {
+        sample_cycle(sample_time_interval, sample_route_num, sample_cxn_num);
+        sample_route_num = 0;
+        sample_cxn_num = 0;
+        return false;
+    } else if (sample_time_interval > SAMPLE_INT) {
+        sample_cycle(sample_time_interval, sample_route_num, sample_cxn_num);
+        sample_time_point = current_time_point;
+        sample_route_num = 0;
+        sample_cxn_num = 0;
+        return true;
+    } else {
+        return true;
+    }
 }
 
 bool QNetwork::sample_cycle(int time_interval, int cycle_finish_route, int cycle_finish_cxn) {
@@ -187,8 +229,15 @@ bool QNetwork::finish() {
     metric_file << "Request Rate: " << (double)IPS * TIME_PROB * net_manager->get_sd_num() * SD_PROB << "/s" << endl;
     metric_file << endl;
     metric_file << "-------- Process --------" << endl;
+    metric_file << "Work Cycle: " << WORK_CYCLE << endl;
     metric_file << "Route Strategy: " << ROUTE_STRTG << endl;
     metric_file << "Resource Manage: " << RSRC_MANAGE << endl;
+    metric_file << endl;
+    metric_file << "-------- Optimization --------" << endl;
+    metric_file << "Selected Requests: " << NUM_SELECTED_REQUESTS << endl;
+    metric_file << "Repeats: " << NUM_REPEATS << endl;
+    metric_file << "Trials: " << NUM_TRIES << endl;
+
     metric_file << endl;
     metric_file << "------ Performance ------" << endl;
     metric_file << "Connection Rate: " << (double)finished_cxn_num / RUN_TIME << "/s" << endl;

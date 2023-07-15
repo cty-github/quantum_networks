@@ -262,3 +262,61 @@ map<int, UserConnection*> RouteManager::check_success_routing(RsrcManager* net_r
     }
     return req_user_cxn;
 }
+
+map<int, UserConnection *> RouteManager::static_check_success_routing(RsrcManager *net_rsrc) {
+    map<int, UserConnection*> req_user_cxn; // map from request id to constructed connection
+    for (auto it_route_proj:route_projects) { //check whether all route_projects success in creating connection
+        RouteProject *route_proj = it_route_proj.second;
+        if (!route_proj->is_success()){
+            //cout << "fail at " << route_proj->get_route_id()<<endl;
+            return req_user_cxn;
+        }
+    }
+    //all successful
+    for (auto it_route_proj:route_projects) {
+        int route_id = it_route_proj.first;
+        RouteProject *route_proj = it_route_proj.second;
+        int request_id = route_proj->get_request()->get_request_id();
+        //organize returned data
+        if (req_user_cxn.find(request_id) != req_user_cxn.end()) {
+            throw logic_error("Duplicate connections for request " + to_string(request_id));
+        }
+        req_user_cxn[request_id] = route_proj->get_user_cxn();
+        //resource recycle
+        if (RSRC_MANAGE == 0) {
+            for (auto it: route_proj->get_link_projs()) {
+                int edge_id = it.first;
+                LinkProject *link_proj = it.second;
+                link_generators[edge_id]->sub_rsrc_num(link_proj->get_total_rsrc_num());
+                net_rsrc->release_link_resource(link_proj->get_s_node_id(),
+                                                link_proj->get_d_node_id(),
+                                                link_proj->get_total_rsrc_num(),
+                                                route_id);
+            }
+            net_rsrc->reserve_node_memory(route_proj->get_user_cxn()->get_s_node_id(), 1, route_id);
+            net_rsrc->reserve_node_memory(route_proj->get_user_cxn()->get_d_node_id(), 1, route_id);
+        } else if (RSRC_MANAGE == 1) {
+            for (auto it: route_proj->get_link_projs()) {
+                int edge_id = it.first;
+                LinkProject *link_proj = it.second;
+                int s_id = link_proj->get_s_node_id();
+                int d_id = link_proj->get_d_node_id();
+                net_rsrc->release_edge_channel(edge_id, link_proj->get_total_rsrc_num(), route_id);
+                link_generators[edge_id]->sub_rsrc_num(link_proj->get_edge_rsrc().second);
+                if (net_topo->get_node(s_id)->is_user()) {
+                    net_rsrc->release_node_memory(s_id, link_proj->get_total_rsrc_num() - 1, route_id);
+                } else {
+                    net_rsrc->release_node_memory(s_id, link_proj->get_total_rsrc_num(), route_id);
+                }
+                if (net_topo->get_node(d_id)->is_user()) {
+                    net_rsrc->release_node_memory(d_id, link_proj->get_total_rsrc_num() - 1, route_id);
+                } else {
+                    net_rsrc->release_node_memory(d_id, link_proj->get_total_rsrc_num(), route_id);
+                }
+            }
+        }
+    }
+    //clear and return
+    route_projects.clear();
+    return req_user_cxn;
+}

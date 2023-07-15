@@ -36,8 +36,8 @@ public:
                   const string& net_topo_filepath,
                   const string& sd_pair_filepath) const;
     bool initialize(int k);
-    bool work_cycle(double run_time);
-    bool static_work_cycle();
+    bool dynamic_cycle();
+    bool static_cycle();
     bool sample_cycle(int time_interval, int cycle_finish_route, int cycle_finish_cxn);
     bool finish();
 };

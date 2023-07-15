@@ -60,6 +60,7 @@ public:
     void add_new_routing(RouteProject* new_route_proj);
     void refresh_routing_state(int time, HsRsrcManager* net_rsrc= nullptr);
     map<int, UserConnection*> check_success_routing(RsrcManager* net_rsrc);
+    map<int, UserConnection*> static_check_success_routing(RsrcManager* net_rsrc);
 };
 
 #endif //QUANTUM_NETWORKS_ROUTE_MANAGER_H

@@ -30,6 +30,7 @@ private:
 //    union{BasicRsrcManager* basic; HsRsrcManager* hs;} net_rsrc;
     RouteManager* route_manager;
     map<int, UserConnection*> user_connections;
+    vector<UserRequest*> waiting_requests_ordered;  // ordered by adding time
 public:
     NetManager(NetTopology* net_topo, int user_num);
     NetManager(const string& filepath, NetTopology* net_topo);
@@ -52,12 +53,15 @@ public:
     vector<UserRequest*> random_request(int time, double time_prob, double sd_prob, double req_rate);
     void add_new_requests(const vector<UserRequest*>& new_requests);
     void reserve_resource(RouteProject* route_proj);
+    vector<RouteProject*> static_routing_projects(RsrcManager* tmp_rsrc);
     vector<RouteProject*> greedy_routing_projects(RsrcManager* tmp_rsrc) const;
     vector<RouteProject*> heuristic_routing_projects(RsrcManager* tmp_rsrc) const;
     vector<RouteProject*> calculate_new_routings(RsrcManager* tmp_rsrc) const;
     void schedule_new_routings();
+    int static_schedule_new_routings(); //modified by Li
     void refresh_routing_state(int time);
     int check_success_routing(const string& runtime_filepath);
+    int static_check_success_routing(const string& runtime_filepath, double run_time);
     int finish_user_connection(int time);
     static double calculate_obj(UserRequest* request, Path* path);
 };

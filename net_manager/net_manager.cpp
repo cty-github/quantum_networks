@@ -256,6 +256,57 @@ void NetManager::reserve_resource(RouteProject* route_proj) {
     }
 }
 
+//modified by Li
+vector<RouteProject*> NetManager::static_routing_projects(RsrcManager* tmp_rsrc) {
+    vector<RouteProject*> new_route_projects;
+    if(waiting_requests_ordered.empty()){
+        //cout<< "Empty waiting requests.\n";
+        return new_route_projects;
+    }
+    int routed_request_num = 0;
+    for (auto it_wait:waiting_requests_ordered) {
+        //UserRequest* serve_request = it_wait.second;
+        UserRequest* serve_request = it_wait;
+        int pair_id = serve_request->get_pair_id();
+        bool found_available_path = 0;
+        for (auto path:candidate_paths.find(pair_id)->second) { //直接从备选path中选一个判断是否合适
+            vector<QEdge*> edges = path->get_edges();
+            int rsrc_num;
+            for (int i = 0; i < edges.size(); i++) { //这一整个for循环就是为了找到这个path中的最小rsrc_num
+                int node_id_a = edges[i]->get_node_id_a();
+                int node_id_b = edges[i]->get_node_id_b();
+                int max_num = tmp_rsrc->max_link_resource(node_id_a, node_id_b);
+                if (i == 0) {
+                    rsrc_num = max_num;
+                }
+                if (max_num < rsrc_num) {
+                    rsrc_num = max_num;
+                }
+            }
+            if (rsrc_num) { //如果合适的话
+                auto* route_proj = new RouteProject(RouteProject::get_next_id(),
+                                                    rsrc_num, path, serve_request);
+                RouteProject::add_next_id();
+                new_route_projects.push_back(route_proj);
+                for (auto it:route_proj->get_link_projs()) {
+                    LinkProject* link_proj = it.second;
+                    tmp_rsrc->reserve_link_resource(link_proj->get_s_node_id(),
+                                                    link_proj->get_d_node_id(),
+                                                    link_proj->get_total_rsrc_num(),
+                                                    route_proj->get_route_id());
+                }
+                found_available_path = 1;
+                break;
+            }
+        }
+        if(!found_available_path)
+            break;
+        routed_request_num += 1;
+    }
+    waiting_requests_ordered.erase(waiting_requests_ordered.begin(),waiting_requests_ordered.begin() + routed_request_num);
+    return new_route_projects;
+}
+
 vector<RouteProject*> NetManager::greedy_routing_projects(RsrcManager* tmp_rsrc) const {
     // greedy realization for test
     vector<RouteProject*> new_route_projects;
@@ -432,6 +483,56 @@ void NetManager::schedule_new_routings() {
     }
 }
 
+int NetManager::static_schedule_new_routings() {
+    RsrcManager* tmp_rsrc;
+    switch (RSRC_MANAGE) {
+        case 0: {
+            tmp_rsrc = new BasicRsrcManager((BasicRsrcManager*)net_rsrc);
+            break;
+        }
+        case 1: {
+            tmp_rsrc = new HsRsrcManager((HsRsrcManager*)net_rsrc);
+            break;
+        }
+        default: {
+            tmp_rsrc = new BasicRsrcManager((BasicRsrcManager*)net_rsrc);
+            break;
+        }
+    }
+    vector<RouteProject*> new_route_projects = static_routing_projects(tmp_rsrc);
+    switch (RSRC_MANAGE) {
+        case 0: {
+            delete (BasicRsrcManager*)tmp_rsrc;
+            break;
+        }
+        case 1: {
+            delete (HsRsrcManager*)tmp_rsrc;
+            break;
+        }
+        default: {
+            delete (BasicRsrcManager*)tmp_rsrc;
+            break;
+        }
+    }
+    for (auto new_route_proj:new_route_projects) {
+        reserve_resource(new_route_proj);
+        UserRequest* request = new_route_proj->get_request();
+        int request_id = request->get_request_id();
+        if (waiting_requests.find(request_id) == waiting_requests.end()) {
+            throw logic_error("Request " + to_string(request_id) + " is not waiting");
+        }
+        waiting_requests.erase(request_id); // similar operation to 'waiting_requests_ordered' has already done in
+        // NetManager::static_schedule_new_routings
+        if (processing_requests.find(request_id) != processing_requests.end()) {
+            throw logic_error("Request " + to_string(request_id) + " has been processing");
+        }
+        processing_requests[request_id] = request;
+        route_manager->add_new_routing(new_route_proj);
+    }
+    return (int)new_route_projects.size();
+}
+
+
 void NetManager::refresh_routing_state(int time) {
     if (route_manager == nullptr) {
         cout << "No Route Manager" << endl;
@@ -450,6 +551,51 @@ void NetManager::refresh_routing_state(int time) {
             throw logic_error("Unknown RSRC_MANAGE");
         }
     }
+}
+
+int NetManager::static_check_success_routing(const std::string &runtime_filepath, double run_time) {
+    //  - Finish Routings
+    ofstream runtime_file;
+    runtime_file.open(runtime_filepath, ios::app);
+    if (!runtime_file.is_open()) {
+        cout << "Cannot Open File " << runtime_filepath << endl;
+        return false;
+    }
+    //  #  req_id  pair_id  cxn_id  fide_th  fide_cxn  task_cpl_time
+    runtime_file << setiosflags(ios::fixed) << setprecision(6);
+    map<int, UserConnection*> new_req_cxn = route_manager->static_check_success_routing(net_rsrc);//只有这里和非静态的不同
+//    if(new_req_cxn.size() == 0){
+//        runtime_file << "Fail to "
+//    }
+    for (auto it_new_cxn: new_req_cxn) {
+        int request_id = it_new_cxn.first;
+        UserConnection* new_cxn = it_new_cxn.second;
+        double task_completion_time = get_time_second(new_cxn->get_created_time(),
+                                                      user_requests[request_id]->get_request_time());
+        runtime_file << "TaskCpl" << "\t";
+        runtime_file << request_id << "\t";
+        runtime_file << user_requests[request_id]->get_pair_id() << "\t";
+        runtime_file << new_cxn->get_connection_id() << "\t";
+        runtime_file << user_requests[request_id]->get_fide_th() << "\t";
+        runtime_file << new_cxn->get_fidelity() << "\t";
+        runtime_file << task_completion_time << endl;
+        if (user_connections.find(request_id) != user_connections.end()) {
+            throw logic_error("Request " + to_string(request_id) + " already has connection");
+        }
+        user_connections[request_id] = new_cxn;
+        UserRequest* request = user_requests[request_id];
+        if (processing_requests.find(request_id) == processing_requests.end()) {
+            throw logic_error("Request " + to_string(request_id) + " is not processing");
+        }
+        processing_requests.erase(request_id);
+        if (serving_requests.find(request_id) != serving_requests.end()) {
+            throw logic_error("Request " + to_string(request_id) + " has been serving");
+        }
+        serving_requests[request_id] = request;
+        user_requests[request_id]->set_created();
+    }
+    runtime_file.close();
+    return (int)new_req_cxn.size();
 }
 
 int NetManager::check_success_routing(const string& runtime_filepath) {
