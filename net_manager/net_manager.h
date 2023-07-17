@@ -58,15 +58,17 @@ public:
     vector<RouteProject*> static_routing_projects(RsrcManager* tmp_rsrc);
     vector<RouteProject*> greedy_routing_projects(RsrcManager* tmp_rsrc) const;
     vector<RouteProject*> heuristic_routing_projects(RsrcManager* tmp_rsrc) const;
+//    vector<RouteProject*> optimal_routing_projects(RsrcManager* tmp_rsrc) const;
     vector<RouteProject*> calculate_new_routings(RsrcManager* tmp_rsrc) const;
     void schedule_new_routings();
-    int static_schedule_new_routings(); //modified by Li
+    void static_schedule_new_routings(); //modified by Li
     void refresh_routing_state(int time);
     int check_success_routing(const string& runtime_filepath);
     int static_check_success_routing(const string& runtime_filepath, double run_time);
     int check_killed_routing(const string& runtime_filepath);
     int finish_user_connection(int time);
     static double calculate_obj(UserRequest* request, RouteProject* route);
+    int get_leftover_routes();
 };
 
 #endif //QUANTUM_NETWORKS_NET_MANAGER_H

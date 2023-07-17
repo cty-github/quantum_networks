@@ -366,3 +366,7 @@ vector<int> RouteManager::check_killed_routing(RsrcManager* net_rsrc) {
     }
     return failed_request;
 }
+
+int RouteManager::get_leftover_routes() {
+    return route_projects.size();
+}

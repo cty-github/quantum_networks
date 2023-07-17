@@ -67,6 +67,7 @@ public:
     map<int, UserConnection*> check_success_routing(RsrcManager* net_rsrc);
     map<int, UserConnection*> static_check_success_routing(RsrcManager* net_rsrc);
     vector<int> check_killed_routing(RsrcManager* net_rsrc);
+    int get_leftover_routes();
 };
 
 #endif //QUANTUM_NETWORKS_ROUTE_MANAGER_H

@@ -174,15 +174,15 @@ bool QNetwork::static_cycle() {
     net_manager->add_new_requests(new_requests);
 
     //  ----- Routings Phase -----
-    int new_routing_num;
-    new_routing_num = net_manager->static_schedule_new_routings();
-    if (new_routing_num) {
-        cout << "Create " << new_routing_num << " Route Project" << endl;
+    int left = net_manager -> get_leftover_routes();
+    if(left == 0){
+        net_manager->static_schedule_new_routings();
     }
     net_manager->refresh_routing_state(time_interval);
 
     //  ----- Services Phase -----
-    int cycle_finish_route = net_manager->static_check_success_routing(runtime_filepath, RUN_TIME);
+    int cycle_finish_route = net_manager->check_success_routing(runtime_filepath);
+    net_manager->check_killed_routing(runtime_filepath);
     sample_route_num += cycle_finish_route;
     finished_route_num += cycle_finish_route;
 //    net_manager->print_serving_requests();

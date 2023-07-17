@@ -19,7 +19,7 @@
 #define CAP_UP 7
 
 // device parameters
-#define PTN_DECAY_RATE 0.0023
+#define PTN_DECAY_RATE 0.0010
 #define PTN_FIDE 0.99
 #define BSM_SUCCESS_RATE 1.0
 #define BSM_Z_FIDE 0.999
@@ -32,8 +32,8 @@
 #define SAMPLE_INT 1000
 
 // realization methods
-#define WORK_CYCLE  0   // work cycle type
-#define ROUTE_STRTG 1   // route strategy type
+#define WORK_CYCLE  0  // work cycle type
+#define ROUTE_STRTG 0   // route strategy type
 #define RSRC_MANAGE 0   // net rsrc manager type
 
 // heuristic optimization (ROUTE_STRTG 1)
@@ -50,6 +50,6 @@
 
 // entangle parameters
 #define LIFESPAN 10000
-#define ROUTE_STOP 100000
+#define ROUTE_STOP 10000
 
 #endif //QUANTUM_NETWORKS_TEST_PARAMS_H

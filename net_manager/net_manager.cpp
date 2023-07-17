@@ -5,6 +5,9 @@
 #include "net_manager.h"
 #include "test_params.h"
 #include "utils/rand.h"
+#include <ilconcert/iloenv.h>
+#include <ilconcert/ilomodel.h>
+#include <ilcplex/ilocplex.h>
 #include <fstream>
 #include <sstream>
 #include <iostream>
@@ -437,6 +440,185 @@ vector<RouteProject *> NetManager::heuristic_routing_projects(RsrcManager *tmp_r
     return new_route_projects;
 }
 
+//vector<RouteProject*> NetManager::optimal_routing_projects(RsrcManager* tmp_rsrc) const {
+//    vector<RouteProject*> new_route_projects;
+//
+//    const int num_requests {int(waiting_requests.size())};
+//    const int num_paths {CANDIDATE_NUM};
+//    const int max_rsrc_num {100};
+//
+//    vector<UserRequest*> requests;
+//    vector<vector<Path*>> paths;
+//    vector<int> edges_id;
+//    vector<int> nodes_id;
+//    vector<double> edge_success_rates;
+//    vector<int> edge_rsrc_nums;
+//    vector<int> node_rsrc_nums;
+//    vector<vector<vector<unsigned short>>> have_edges;
+//    vector<vector<vector<unsigned short>>> have_nodes;
+//
+//    const auto num_edges = edges_id.size();
+//    const auto num_nodes = nodes_id.size();
+//
+//    for (auto it_wait: waiting_requests) {
+//        auto serve_request = it_wait.second;
+//        requests.push_back(serve_request);
+//        for (auto path: candidate_paths.find(serve_request->get_pair_id())->second) {
+//            paths[requests.size() - 1].push_back(path);
+//            for (auto edge: path->get_edges()) {
+//                if (!binary_search(edges_id.begin(), edges_id.end(), edge->get_edge_id())) {
+//                    edges_id.push_back(edge->get_edge_id());
+//                    edge_success_rates.push_back(edge->get_success_rate());
+//                    edge_rsrc_nums.push_back(edge->get_channel_capacity());
+//                }
+//                if (!binary_search(nodes_id.begin(), nodes_id.end(), edge->get_node_id_a())) {
+//                    nodes_id.push_back(edge->get_node_id_a());
+//                    node_rsrc_nums.push_back(net_topo->get_node(edge->get_node_id_a())->get_memory_size());
+//                }
+//                if (!binary_search(nodes_id.begin(), nodes_id.end(), edge->get_node_id_b())) {
+//                    nodes_id.push_back(edge->get_node_id_b());
+//                    node_rsrc_nums.push_back(net_topo->get_node(edge->get_node_id_b())->get_memory_size());
+//                }
+//            }
+//        }
+//    }
+//
+//    for (int i = 0; i < num_requests; ++i) {
+//        have_edges.emplace_back();
+//        for (int j = 0; j < num_paths; ++j) {
+//            have_edges[i].emplace_back();
+//            auto path = paths[i][j];
+//            have_edges[i][j] = vector<unsigned short>(edges_id.size(), 0);
+//            auto edges = path->get_edges();
+//            auto path_edges_size = edges.size();
+//            for (auto k = 0; k < path_edges_size; ++k) {
+//                auto it_node_a_pos = find(nodes_id.begin(), nodes_id.end(), edges[k]->get_node_id_a());
+//                auto it_node_b_pos = find(nodes_id.begin(), nodes_id.end(), edges[k]->get_node_id_b());
+//                auto it_edge_pos = find(edges_id.begin(), edges_id.end(), edges[k]->get_edge_id());
+//                if (k == 0) {
+//                    have_nodes[i][j][it_node_a_pos - nodes_id.begin()] = 1;
+//                    have_nodes[i][j][it_node_b_pos - nodes_id.begin()] = 2;
+//                    have_edges[i][j][it_edge_pos - edges_id.begin()] = 1;
+//                } else if (k == path_edges_size - 1) {
+//                    have_nodes[i][j][it_node_a_pos - nodes_id.begin()] = 2;
+//                    have_nodes[i][j][it_node_b_pos - nodes_id.begin()] = 1;
+//                    have_edges[i][j][it_edge_pos - edges_id.begin()] = 1;
+//                } else {
+//                    have_nodes[i][j][it_node_a_pos - nodes_id.begin()] = 2;
+//                    have_nodes[i][j][it_node_b_pos - nodes_id.begin()] = 2;
+//                    have_edges[i][j][it_edge_pos - edges_id.begin()] = 1;
+//                }
+//            }
+//        }
+//    }
+//    // 到此初始化全部完成.....
+//
+//    // cplex求解部分
+//    IloEnv env;//创建环境变量
+//    IloModel model(env);//创建模型对象
+//
+//    // 声明变量
+//    // 变量1，satisfy，选择第i个request，第j条候选路径
+//    IloArray<IloBoolVarArray> satisfy(env);
+//    satisfy.setSize(num_requests);
+//    for (int i = 0; i < satisfy.getSize(); ++i) {
+//        satisfy[i].setSize(num_paths);
+//    }
+//    for (int i = 0; i < satisfy.getSize(); i++) {
+//        for (int j = 0; j < satisfy[i].getSize(); j++) {
+//            satisfy[i][j] = IloBoolVar(env);
+//        }
+//    }
+//
+//    // 变量2，received_rsrc，给每个请求分配多少资源
+//    IloIntVarArray received_rsrc(env);
+//    received_rsrc.setSize(num_requests);
+//    for (int i = 0; i < num_requests; ++i) {
+//        received_rsrc[i] = IloIntVar(env, 0, max_rsrc_num);
+//    }
+//
+//    // 目标函数
+//    IloExpr e(env);
+//    for (int i = 0; i < num_requests; ++i) {
+//        IloExpr e1(env); // 计算等候时间 * satisfy
+//        IloExpr e2(env); // 计算下部
+//
+//        IloExpr e_sum(env);
+//        int num_e = 0;
+//        for (int j = 0; j < num_paths; ++j) {
+//            e_sum += satisfy[i][j];
+//            IloExpr e_prod(env);
+//            for (int k = 0; k < num_edges; ++k) {
+//                if (have_edges[i][j][k]) {
+//                    e_prod = e_prod * edge_success_rates[k] * received_rsrc[i];
+//                    num_e++;
+//                }
+//            }
+//            e2 += satisfy[i][j] * e_prod;
+//        }
+//
+//        e1 += get_time_interval(get_current_time(), requests[i]->get_request_time()) * e_sum;
+//        e2 = 1 / (pow(LIFESPAN, num_e - 1) * e2 + 0.1);
+//        e = e1 / e2;
+//    }
+//    model.add(IloMaximize(env, e));
+//    e.end();
+//    // 约束1，必定满足一个请求
+//    IloExpr c1(env);
+//    for (int i = 0; i < num_requests; ++i)
+//        for (int j = 0; j < num_paths; ++j)
+//            c1 += satisfy[i][j];
+//    model.add(c1 >= 1);
+//    c1.end();
+//
+//    // 约束2，只能选择一个路径
+//    IloExpr c2(env);
+//    for (int i = 0; i < num_requests; ++i) {
+//        for (int j = 0; j < num_paths; ++j) {
+//            c2 += satisfy[i][j];
+//        }
+//        model.add(c2 <= 1);
+//        c2.end();
+//    }
+//
+//    // 约束3，资源限制
+//    IloExpr c3(env);
+//    for (int k = 0; k < num_edges; ++k) {
+//        for (int i = 0; i < num_requests; ++i) {
+//            for (int j = 0; j < num_paths; ++j) {
+//                c3 += satisfy[i][j] * have_edges[i][j][k] * received_rsrc[i];
+//            }
+//        }
+//        model.add(c3 <= edge_rsrc_nums[k]);
+//    }
+//    c3.end();
+//    IloExpr c4(env);
+//    for (int k = 0; k < num_nodes; ++k) {
+//        for (int i = 0; i < num_requests; ++i) {
+//            for (int j = 0; j < num_paths; ++j) {
+//                c4 += satisfy[i][j] * have_nodes[i][j][k] * received_rsrc[i];
+//            }
+//        }
+//        model.add(c4 <= node_rsrc_nums[k]);
+//    }
+//
+//    IloCplex cplex(model);//创建求解对象
+//    cplex.setParam(IloCplex::TiLim, 0.2);
+//    cplex.extract(model);//抽取模型
+//    if (cplex.solve()) {
+//        cplex.getStatus();//获取当前解的状态，Infeasible\ Feasible\ Optimal
+//        //cplex.getObjValue();获取目标函数值，该方法无需指明对象，默认获取的是IloMinimize/IloMaximize的值
+//        //可以通过env.out()输出，该方法等同于iostream中的std::cout
+//        env.out() << cplex.getObjValue() << "\n";
+//        //获取决策变量
+//    }
+//    cplex.end();//释放对象
+//    model.end();
+//    env.end();
+//
+//    return {};
+//}
+
 vector<RouteProject*> NetManager::calculate_new_routings(RsrcManager* tmp_rsrc) const {
     vector<RouteProject*> new_route_projects;
     switch (ROUTE_STRTG) {
@@ -448,6 +630,10 @@ vector<RouteProject*> NetManager::calculate_new_routings(RsrcManager* tmp_rsrc) 
             new_route_projects = heuristic_routing_projects(tmp_rsrc);
             break;
         }
+//        case 2: {
+//            new_route_projects = optimal_routing_projects(tmp_rsrc);
+//            break;
+//        }
         default: {
             throw logic_error("Unknown ROUTE_STRTG");
         }
@@ -502,7 +688,7 @@ void NetManager::schedule_new_routings() {
     }
 }
 
-int NetManager::static_schedule_new_routings() {
+void NetManager::static_schedule_new_routings() {
     RsrcManager* tmp_rsrc;
     switch (RSRC_MANAGE) {
         case 0: {
@@ -518,7 +704,7 @@ int NetManager::static_schedule_new_routings() {
             break;
         }
     }
-    vector<RouteProject*> new_route_projects = static_routing_projects(tmp_rsrc);
+    vector<RouteProject*> new_route_projects = heuristic_routing_projects(tmp_rsrc);
     switch (RSRC_MANAGE) {
         case 0: {
             delete (BasicRsrcManager*)tmp_rsrc;
@@ -549,7 +735,6 @@ int NetManager::static_schedule_new_routings() {
         processing_requests[request_id] = request;
         route_manager->add_new_routing(new_route_proj);
     }
-    return (int)new_route_projects.size();
 }
 
 
@@ -717,4 +902,8 @@ double NetManager::calculate_obj(UserRequest* request, RouteProject* route) {
     int wait_time = get_time_interval(get_current_time(), request->get_request_time());
     double e_slot = route->get_expect_slots();
     return wait_time / e_slot;
+}
+
+int NetManager::get_leftover_routes() {
+    return route_manager -> get_leftover_routes();
 }
