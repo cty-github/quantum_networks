@@ -10,13 +10,39 @@
 #include <utility>
 
 QNetwork::QNetwork(int ptn_src_num, int bsm_num, int user_num, int repeater_num,
-                   double size, double alpha, double beta, string runtime_filepath, string metric_filepath):
+                   double size, double alpha, double beta,
+                   const string& param_filepath, string runtime_filepath, string metric_filepath):
 start_time_point(get_current_time()), sample_time_point(get_current_time()), current_time_point(get_current_time()),
 sample_route_num(0), sample_cxn_num(0), finished_route_num(0), finished_cxn_num(0),
 runtime_filepath(std::move(runtime_filepath)), metric_filepath(std::move(metric_filepath)) {
     device_manager = new DeviceManager(ptn_src_num, bsm_num, size);
     net_topo = new NetTopology(device_manager, user_num, repeater_num, size, alpha, beta);
     net_manager = new NetManager(net_topo, user_num);
+    ofstream param_file;
+    param_file.open(param_filepath, ios::out);
+    if (!param_file.is_open()) {
+        throw logic_error("Cannot Open File " + param_filepath);
+    }
+    param_file << "------ NetTopology ------" << endl;
+    param_file << "Net Size: " << NET_SIZE << endl;
+    param_file << "User Num: " << USER_NUM << endl;
+    param_file << "Repeater Num: " << REPEATER_NUM << endl;
+    param_file << "Mem Lower Bound: " << MEM_LOW << endl;
+    param_file << "Mem Upper Bound: " << MEM_UP << endl;
+    param_file << "Edge Num: " << net_topo->get_edge_num() << endl;
+    double dist_sum = 0;
+    for (auto it_edge:net_topo->get_edges()) {
+        dist_sum += it_edge.second->get_distance();
+    }
+    double average_dist = dist_sum/net_topo->get_edge_num();
+    param_file << "Net Average Edge Length: " << average_dist << endl;
+    param_file << "Net Average Success Rate: " << exp(-PTN_DECAY_RATE * average_dist) << endl;
+    param_file << "Cap Lower Bound: " << CAP_LOW << endl;
+    param_file << "Cap Upper Bound: " << CAP_UP << endl;
+    param_file << "SD Num: " << net_manager->get_sd_num() << endl;
+    param_file << "Decay Rate: " << PTN_DECAY_RATE << endl;
+    param_file << endl;
+    param_file.close();
 }
 
 QNetwork::QNetwork(const string& net_dev_filepath, const string& net_topo_filepath, const string& sd_pair_filepath,
@@ -209,23 +235,6 @@ bool QNetwork::finish() {
         cout << "Cannot Open File " << metric_filepath << endl;
         return false;
     }
-    metric_file << "------ NetTopology ------" << endl;
-    metric_file << "Net Size: " << NET_SIZE << endl;
-    metric_file << "User Num: " << USER_NUM << endl;
-    metric_file << "Repeater Num: " << REPEATER_NUM << endl;
-    metric_file << "Mem Lower Bound: " << MEM_LOW << endl;
-    metric_file << "Mem Upper Bound: " << MEM_UP << endl;
-    metric_file << "Edge Num: " << net_topo->get_edge_num() << endl;
-    double dist_sum = 0;
-    for (auto it_edge:net_topo->get_edges()) {
-        dist_sum += it_edge.second->get_distance();
-    }
-    double average_dist = dist_sum/net_topo->get_edge_num();
-    metric_file << "Net Average Edge Length: " << average_dist << endl;
-    metric_file << "Net Average Success Rate: " << exp(-PTN_DECAY_RATE * average_dist) << endl;
-    metric_file << "Cap Lower Bound: " << CAP_LOW << endl;
-    metric_file << "Cap Upper Bound: " << CAP_UP << endl;
-    metric_file << endl;
     metric_file << "-------- Request --------" << endl;
     metric_file << "Request Rate: " << (double)IPS * TIME_PROB * net_manager->get_sd_num() * SD_PROB << "/s" << endl;
     metric_file << endl;
@@ -241,6 +250,12 @@ bool QNetwork::finish() {
     metric_file << endl;
     metric_file << "------ Performance ------" << endl;
     metric_file << "Connection Rate: " << (double)finished_cxn_num / RUN_TIME << "/s" << endl;
+    double total_delay = 0;
+    for (auto it_delay:net_manager->get_req_delay()) {
+        total_delay += it_delay.second;
+    }
+    double average_delay = total_delay/(double)net_manager->get_req_delay().size();
+    metric_file << "Average Delay: " << average_delay/IPS << "s" << endl;
     metric_file << endl;
     metric_file.close();
     return true;

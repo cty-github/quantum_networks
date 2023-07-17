@@ -12,19 +12,33 @@
 #include <algorithm>
 
 NetManager::NetManager(NetTopology* net_topo, int user_num): net_topo(net_topo) {
-    double request_rate = SD_RATIO/user_num;
-    uniform_real_distribution<double> rand_double(0.0,1.0);
     uniform_real_distribution<double> rand_fidelity(SD_FIDE_LOW,SD_FIDE_UP);
-    for (int i = 0; i < user_num; i++) {
-        for (int j = 0; j < user_num; j++) {
-            if (i != j && rand_double(rand_eng) < request_rate) {
-                sd_pairs[SDPair::get_next_id()] = new SDPair(SDPair::get_next_id(),
-                                                             i, j,
-                                                             rand_fidelity(rand_eng));
-                SDPair::add_next_id();
-            }
+    int sd_num = (int)(SD_RATIO * user_num);
+    uniform_int_distribution<int> rand_id(0, user_num-1);
+    int gen_num = 0;
+    while(gen_num < sd_num) {
+        int i = rand_id(rand_eng);
+        int j = rand_id(rand_eng);
+        if (i != j) {
+            sd_pairs[SDPair::get_next_id()] = new SDPair(SDPair::get_next_id(),
+                                                         i, j,
+                                                         rand_fidelity(rand_eng));
+            SDPair::add_next_id();
+            gen_num++;
         }
     }
+//    double request_rate = SD_RATIO/user_num;
+//    uniform_real_distribution<double> rand_double(0.0,1.0);
+//    for (int i = 0; i < user_num; i++) {
+//        for (int j = 0; j < user_num; j++) {
+//            if (i != j && rand_double(rand_eng) < request_rate) {
+//                sd_pairs[SDPair::get_next_id()] = new SDPair(SDPair::get_next_id(),
+//                                                             i, j,
+//                                                             rand_fidelity(rand_eng));
+//                SDPair::add_next_id();
+//            }
+//        }
+//    }
     switch (RSRC_MANAGE) {
         case 0: {
             net_rsrc = new BasicRsrcManager(net_topo);
@@ -203,6 +217,10 @@ void NetManager::print_user_connections() const {
 //        cout << "Connection " << cxn->get_connection_id() << " Serve Request " << request_id << endl;
 //    }
     cout << "User Connection Num: " << get_user_cxn_num() << endl;
+}
+
+map<int, int> NetManager::get_req_delay() const {
+    return req_delay;
 }
 
 vector<UserRequest*> NetManager::random_request(int time, double time_prob, double sd_prob, double req_rate) {
@@ -637,6 +655,8 @@ int NetManager::check_success_routing(const string& runtime_filepath) {
         }
         serving_requests[request_id] = request;
         user_requests[request_id]->set_created();
+        req_delay[request_id] = get_time_interval(user_requests[request_id]->get_satisfy_time(),
+                                                  user_requests[request_id]->get_request_time());
     }
     runtime_file.close();
     return (int)new_req_cxn.size();

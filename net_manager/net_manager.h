@@ -31,6 +31,7 @@ private:
     RouteManager* route_manager;
     map<int, UserConnection*> user_connections;
     vector<UserRequest*> waiting_requests_ordered;  // ordered by adding time
+    map<int, int> req_delay;
 public:
     NetManager(NetTopology* net_topo, int user_num);
     NetManager(const string& filepath, NetTopology* net_topo);
@@ -50,6 +51,7 @@ public:
     void print_routing_projects() const;
     int get_user_cxn_num() const;
     void print_user_connections() const;
+    map<int, int> get_req_delay() const;
     vector<UserRequest*> random_request(int time, double time_prob, double sd_prob, double req_rate);
     void add_new_requests(const vector<UserRequest*>& new_requests);
     void reserve_resource(RouteProject* route_proj);

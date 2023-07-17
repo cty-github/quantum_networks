@@ -12,12 +12,28 @@ int main() {
     string proj_path = "/Users/chutianyao/Data/Quantum Technology and Device/Quantum Networks/code/quantum_networks/";
     string current_time_stamp = get_current_time_stamp();
 
+//    // prepare network
+//    string exp_case = "decay-rate-"+to_string(PTN_DECAY_RATE*1000).substr(0,3);
+//    string exp_path = proj_path+"data/experiment/"+exp_case+"/";
+//    mkdir(exp_path.c_str(), 0777);
+//    QNetwork qnetwork = QNetwork(PTNSRC_NUM, BSM_NUM,
+//                                 USER_NUM, REPEATER_NUM,
+//                                 NET_SIZE, ALPHA, BETA,
+//                                 exp_path+"param_"+exp_case+".txt",
+//                                 exp_path+"runtime_"+current_time_stamp+".txt",
+//                                 exp_path+"metric_"+current_time_stamp+".txt");
+//    qnetwork.save_net(exp_path+"net_dev_"+exp_case+".txt",
+//                      exp_path+"net_topo_"+exp_case+".txt",
+//                      exp_path+"sd_pair_"+exp_case+".txt");
+
     // example network
-    QNetwork qnetwork = QNetwork(proj_path+"data/example/net_dev_example.txt",
-                                 proj_path+"data/example/net_topo_example.txt",
-                                 proj_path+"data/example/sd_pair_example.txt",
-                                 proj_path+"data/example/output/runtime_"+current_time_stamp+".txt",
-                                 proj_path+"data/example/output/metric_"+current_time_stamp+".txt");
+    string exp_case = "decay-rate-"+to_string(PTN_DECAY_RATE*1000).substr(0,3);
+    string exp_path = proj_path+"data/experiment/"+exp_case+"/";
+    QNetwork qnetwork = QNetwork(exp_path+"net_dev_"+exp_case+".txt",
+                                 exp_path+"net_topo_"+exp_case+".txt",
+                                 exp_path+"sd_pair_"+exp_case+".txt",
+                                 exp_path+"runtime_"+current_time_stamp+".txt",
+                                 exp_path+"metric_"+current_time_stamp+".txt");
 
 //    // test network
 //    string test_path = proj_path+"data/test/"+current_time_stamp+"/";

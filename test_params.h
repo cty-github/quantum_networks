@@ -9,7 +9,7 @@
 #define PTNSRC_NUM 10
 #define BSM_NUM 10
 #define USER_NUM 20
-#define REPEATER_NUM 30
+#define REPEATER_NUM 40
 #define NET_SIZE 10000
 #define ALPHA 0.4
 #define BETA 0.9    // \beta*e^{-l/(\alpha*L)}
@@ -19,7 +19,7 @@
 #define CAP_UP 7
 
 // device parameters
-#define PTN_DECAY_RATE 0.001
+#define PTN_DECAY_RATE 0.0023
 #define PTN_FIDE 0.99
 #define BSM_SUCCESS_RATE 1.0
 #define BSM_Z_FIDE 0.999
@@ -27,13 +27,13 @@
 
 // working parameters
 #define CANDIDATE_NUM 5
-#define RUN_TIME 10
+#define RUN_TIME 60
 #define IPS 10000
 #define SAMPLE_INT 1000
 
 // realization methods
 #define WORK_CYCLE  0   // work cycle type
-#define ROUTE_STRTG 0   // route strategy type
+#define ROUTE_STRTG 1   // route strategy type
 #define RSRC_MANAGE 0   // net rsrc manager type
 
 // heuristic optimization (ROUTE_STRTG 1)
@@ -41,7 +41,7 @@
 #define NUM_REPEATS 10
 
 // request parameters
-#define SD_RATIO 1.0    // determine serve sd pair
+#define SD_RATIO 1.5    // determine serve sd pair
 #define SD_FIDE_UP 0.99
 #define SD_FIDE_LOW 0.95
 #define TIME_PROB 0.001
@@ -50,6 +50,6 @@
 
 // entangle parameters
 #define LIFESPAN 10000
-#define ROUTE_STOP 50000
+#define ROUTE_STOP 100000
 
 #endif //QUANTUM_NETWORKS_TEST_PARAMS_H

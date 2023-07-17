@@ -27,7 +27,8 @@ private:
     string metric_filepath;
 public:
     QNetwork(int ptn_src_num, int bsm_num, int user_num, int repeater_num,
-             double size, double alpha, double beta, string runtime_filepath, string metric_filepath);
+             double size, double alpha, double beta,
+             const string& param_filepath, string runtime_filepath, string metric_filepath);
     QNetwork(const string& net_dev_filepath, const string& net_topo_filepath,
              const string& sd_pair_filepath, string runtime_filepath, string metric_filepath);
     ~QNetwork();
