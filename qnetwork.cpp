@@ -110,6 +110,7 @@ bool QNetwork::dynamic_cycle() {
 
     //  ----- Services Phase -----
     int cycle_finish_route = net_manager->check_success_routing(runtime_filepath);
+    net_manager->check_killed_routing(runtime_filepath);
     sample_route_num += cycle_finish_route;
     finished_route_num += cycle_finish_route;
 //    net_manager->print_serving_requests();
@@ -236,7 +237,6 @@ bool QNetwork::finish() {
     metric_file << "-------- Optimization --------" << endl;
     metric_file << "Selected Requests: " << NUM_SELECTED_REQUESTS << endl;
     metric_file << "Repeats: " << NUM_REPEATS << endl;
-    metric_file << "Trials: " << NUM_TRIES << endl;
 
     metric_file << endl;
     metric_file << "------ Performance ------" << endl;

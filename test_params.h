@@ -27,19 +27,18 @@
 
 // working parameters
 #define CANDIDATE_NUM 5
-#define RUN_TIME 5
+#define RUN_TIME 10
 #define IPS 10000
 #define SAMPLE_INT 1000
 
 // realization methods
-#define WORK_CYCLE  1   // work cycle type
+#define WORK_CYCLE  0   // work cycle type
 #define ROUTE_STRTG 0   // route strategy type
 #define RSRC_MANAGE 0   // net rsrc manager type
 
 // heuristic optimization (ROUTE_STRTG 1)
 #define NUM_SELECTED_REQUESTS 15
 #define NUM_REPEATS 10
-#define NUM_TRIES 10000
 
 // request parameters
 #define SD_RATIO 1.0    // determine serve sd pair
@@ -51,5 +50,6 @@
 
 // entangle parameters
 #define LIFESPAN 10000
+#define ROUTE_STOP 50000
 
 #endif //QUANTUM_NETWORKS_TEST_PARAMS_H

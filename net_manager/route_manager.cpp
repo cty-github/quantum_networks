@@ -11,8 +11,6 @@ int RouteProject::next_id = 0;
 
 RouteProject::~RouteProject() = default;
 
-RouteManager::~RouteManager() = default;
-
 RouteProject::RouteProject(int route_id, int rsrc_num, Path* path, UserRequest* request):
 route_id(route_id), path(path), request(request), success(false), user_cxn(nullptr) {
     vector<QNode*> nodes = path->get_nodes();
@@ -26,6 +24,11 @@ route_id(route_id), path(path), request(request), success(false), user_cxn(nullp
                                           {1,0}, {1,0}, {1,0});
         link_projects[edge_id] = link_proj;
     }
+    double p = 1;
+    for (auto edge : edges) {
+        p *= edge->get_success_rate() * link_projects[edge->get_edge_id()]->get_total_rsrc_num();
+    }
+    expect_slots = 1 / (pow(LIFESPAN, edges.size() - 1) * p);
     link_manager = new LinkManager(link_projects, route_id);
 }
 
@@ -33,16 +36,28 @@ int RouteProject::get_route_id() const {
     return route_id;
 }
 
+void RouteProject::set_start_time() {
+    start_time = get_current_time();
+}
+
+ClockTime RouteProject::get_start_time() const {
+    return start_time;
+}
+
 map<int, LinkProject*> RouteProject::get_link_projs() {
     return link_projects;
 }
 
-Path* RouteProject::get_path() {
+Path* RouteProject::get_path() const {
     return path;
 }
 
-UserRequest* RouteProject::get_request() {
+UserRequest* RouteProject::get_request() const {
     return request;
+}
+
+double RouteProject::get_expect_slots() const {
+    return expect_slots;
 }
 
 void RouteProject::add_links(int edge_id, vector<EntangleLink*> links) {
@@ -117,6 +132,8 @@ RouteManager::RouteManager(NetTopology* net_topo): net_topo(net_topo) {
                                                       edge->get_ptn_src());
     }
 }
+
+RouteManager::~RouteManager() = default;
 
 void RouteManager::print_routing_projects() const {
     cout << "- Routing Projects" << endl;
@@ -319,4 +336,33 @@ map<int, UserConnection *> RouteManager::static_check_success_routing(RsrcManage
     //clear and return
     route_projects.clear();
     return req_user_cxn;
+}
+
+vector<int> RouteManager::check_killed_routing(RsrcManager* net_rsrc) {
+    vector<int> killed_routings;
+    vector<int> failed_request;
+    for (auto it_route_proj:route_projects) {
+        int route_id = it_route_proj.first;
+        RouteProject* route_proj = it_route_proj.second;
+        int run_slots = get_time_interval(get_current_time(), route_proj->get_start_time());
+        if (run_slots > route_proj->get_expect_slots() || run_slots > ROUTE_STOP) {
+            killed_routings.push_back(route_id);
+            int request_id = route_proj->get_request()->get_request_id();
+            failed_request.push_back(request_id);
+            for (auto it:route_proj->get_link_projs()) {
+                int edge_id = it.first;
+                LinkProject* link_proj = it.second;
+                link_generators[edge_id]->sub_rsrc_num(link_proj->get_total_rsrc_num());
+                link_generators[edge_id]->del_req_route(route_id);
+                net_rsrc->release_link_resource(link_proj->get_s_node_id(),
+                                                link_proj->get_d_node_id(),
+                                                link_proj->get_total_rsrc_num(),
+                                                route_id);
+            }
+        }
+    }
+    for (auto route_id:killed_routings) {
+        route_projects.erase(route_id);
+    }
+    return failed_request;
 }

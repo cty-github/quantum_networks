@@ -58,6 +58,7 @@ public:
     void add_rsrc_num(int new_rsrc_num);
     void sub_rsrc_num(int old_rsrc_num);
     void add_req_route(int route_id, int req_num);
+    void del_req_route(int route_id);
     EntangleLink* try_generate_link() const;
     vector<EntangleLink*> generate_links(int time) const;
     map<int, vector<EntangleLink*>> serve_requests(vector<EntangleLink*> new_links);

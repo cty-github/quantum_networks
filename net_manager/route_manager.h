@@ -19,9 +19,11 @@
 class RouteProject {
 private:
     int route_id;
+    ClockTime start_time;
     map<int, LinkProject*> link_projects;   // map between edge id and link proj on it
     Path* path;
     UserRequest* request;
+    double expect_slots;
     LinkManager* link_manager;
     bool success;
     UserConnection* user_cxn;
@@ -30,9 +32,12 @@ public:
     RouteProject(int route_id, int rsrc_num, Path* path, UserRequest* request);
     ~RouteProject();
     int get_route_id() const;
+    void set_start_time();
+    ClockTime get_start_time() const;
     map<int, LinkProject*> get_link_projs();
-    Path* get_path();
-    UserRequest* get_request();
+    Path* get_path() const;
+    UserRequest* get_request() const;
+    double get_expect_slots() const;
     void add_links(int edge_id, vector<EntangleLink*> links);
     map<int, int> update_entangles(int time);
     map<int, int> purify_available_links(HsRsrcManager* net_rsrc=nullptr);
@@ -61,6 +66,7 @@ public:
     void refresh_routing_state(int time, HsRsrcManager* net_rsrc= nullptr);
     map<int, UserConnection*> check_success_routing(RsrcManager* net_rsrc);
     map<int, UserConnection*> static_check_success_routing(RsrcManager* net_rsrc);
+    vector<int> check_killed_routing(RsrcManager* net_rsrc);
 };
 
 #endif //QUANTUM_NETWORKS_ROUTE_MANAGER_H

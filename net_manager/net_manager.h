@@ -62,8 +62,9 @@ public:
     void refresh_routing_state(int time);
     int check_success_routing(const string& runtime_filepath);
     int static_check_success_routing(const string& runtime_filepath, double run_time);
+    int check_killed_routing(const string& runtime_filepath);
     int finish_user_connection(int time);
-    static double calculate_obj(UserRequest* request, Path* path);
+    static double calculate_obj(UserRequest* request, RouteProject* route);
 };
 
 #endif //QUANTUM_NETWORKS_NET_MANAGER_H

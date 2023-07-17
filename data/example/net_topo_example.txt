@@ -1,175 +1,402 @@
 #		type		id	pos_x	pos_y	n_mem	bsm
-node	user		0	5409.12	8959.78	13		1
-node	user		1	2135.43	9402.15	10		4
-node	user		2	5733.29	71.4773	10		3
-node	user		3	3885.41	5687.01	10		0
-node	user		4	2605.78	9203.99	10		4
-node	user		5	985.428	4775.13	12		5
-node	user		6	3331.07	8148.09	12		9
-node	user		7	3134.24	2260.58	11		2
-node	user		8	830.283	2877.77	13		5
-node	user		9	1324.96	7863.34	14		8
-node	repeater	10	3567.06	5163.46	11		0
-node	repeater	11	9355.38	151.501	13		3
-node	repeater	12	7361.16	9137.58	12		1
-node	repeater	13	2937.53	5821.04	12		0
-node	repeater	14	5587.36	2007.47	14		3
-node	repeater	15	1627.63	3218.2	14		5
-node	repeater	16	6374.37	2386	10		3
-node	repeater	17	9454.02	759.184	14		3
-node	repeater	18	7691.71	1276.11	13		3
-node	repeater	19	3911	8257.52	12		1
-node	repeater	20	9499.4	3735.83	14		3
-node	repeater	21	2347.21	5531.31	12		0
-node	repeater	22	4811.86	8992.58	14		1
-node	repeater	23	4954.96	2329.71	12		3
-node	repeater	24	9989.84	8851.1	10		1
-node	repeater	25	5383.14	3024.35	10		3
-node	repeater	26	6730.35	6029.79	11		3
-node	repeater	27	7738.17	2002.88	11		3
-node	repeater	28	8060.81	3489.1	10		3
-node	repeater	29	9914.52	1080.28	13		3
+node	user		0	7009.86	1991.34	11		5
+node	user		1	6078.26	2833.17	10		5
+node	user		2	2275.55	2443.24	10		6
+node	user		3	9597.99	2838.19	14		4
+node	user		4	9895.89	3231.95	10		4
+node	user		5	6081.4	1315.56	10		5
+node	user		6	5122.03	7652.9	12		7
+node	user		7	5970.83	4452.34	11		5
+node	user		8	727.317	2078.57	12		8
+node	user		9	1006.82	811.913	13		8
+node	user		10	2795.37	3084.23	11		6
+node	user		11	5243.07	3646.32	10		0
+node	user		12	6367.73	6988.45	11		5
+node	user		13	9755.29	5199.28	14		4
+node	user		14	991.538	7105.49	12		1
+node	user		15	5880.33	6768.09	11		5
+node	user		16	3098.79	989.26	10		8
+node	user		17	8679.29	8654.46	13		4
+node	user		18	3664.94	2597.61	14		0
+node	user		19	9432.7	1696.71	10		5
+node	repeater	20	6426.41	5362.84	13		5
+node	repeater	21	9418.06	9334.05	12		4
+node	repeater	22	586.759	5798.66	14		1
+node	repeater	23	9426.32	7039.19	12		4
+node	repeater	24	983.282	6441.58	12		1
+node	repeater	25	1235.88	3467.97	12		6
+node	repeater	26	2182.85	9001.56	10		3
+node	repeater	27	369.169	6046.84	13		1
+node	repeater	28	8810.19	8936.43	10		4
+node	repeater	29	1149.92	7225.47	14		3
+node	repeater	30	8129.74	9261.01	12		4
+node	repeater	31	3301.84	2131.77	13		0
+node	repeater	32	2082.82	4947.3	12		6
+node	repeater	33	6915.74	152.106	13		5
+node	repeater	34	4602.52	402.377	12		8
+node	repeater	35	6724.48	5707.5	13		5
+node	repeater	36	9430.33	8798.95	13		4
+node	repeater	37	7959.05	6723.51	11		4
+node	repeater	38	5893.78	8111.63	13		7
+node	repeater	39	3771.62	5477.62	11		0
+node	repeater	40	8036.05	8201.96	11		4
+node	repeater	41	672.51	666.598	14		8
+node	repeater	42	2629.37	7678.05	13		9
+node	repeater	43	4792.16	5837.3	11		0
+node	repeater	44	2263.88	9520.14	11		3
+node	repeater	45	9268.43	2281.63	11		5
+node	repeater	46	1634.82	8050.08	12		3
+node	repeater	47	8855.87	1430.38	10		5
+node	repeater	48	5277.17	5063.94	11		0
+node	repeater	49	6411.71	7442.44	11		5
 
 #		id		node_A	node_B	cap	ptn_src
-edge	0		0		1		10	6
-edge	1		0		3		10	6
-edge	2		0		6		11	6
-edge	3		0		9		14	6
-edge	4		0		12		13	7
-edge	5		0		22		13	6
-edge	6		1		4		14	6
-edge	7		1		9		11	2
-edge	8		1		11		14	8
-edge	9		1		14		14	8
-edge	10		1		15		14	0
-edge	11		1		21		11	6
-edge	12		1		22		12	6
-edge	13		2		3		13	1
-edge	14		2		4		12	9
-edge	15		2		8		10	1
-edge	16		2		16		14	1
-edge	17		2		20		12	3
-edge	18		2		25		10	1
-edge	19		2		26		14	4
-edge	20		3		6		11	6
-edge	21		3		8		14	0
-edge	22		3		13		10	8
-edge	23		3		14		12	9
-edge	24		3		15		13	0
-edge	25		3		21		13	0
-edge	26		3		22		11	6
-edge	27		3		28		13	4
-edge	28		4		5		10	2
-edge	29		4		6		13	6
-edge	30		4		9		11	6
-edge	31		4		10		11	6
-edge	32		4		12		10	6
-edge	33		4		13		10	6
-edge	34		4		15		14	0
-edge	35		4		16		10	8
-edge	36		4		24		11	7
-edge	37		4		27		14	8
-edge	38		4		29		10	8
-edge	39		5		8		12	0
-edge	40		5		9		12	2
-edge	41		5		14		12	1
-edge	42		5		17		10	1
-edge	43		5		19		10	0
-edge	44		6		11		10	4
-edge	45		6		13		13	6
-edge	46		6		16		11	8
-edge	47		6		18		12	8
-edge	48		6		19		14	6
-edge	49		6		22		13	6
-edge	50		6		23		13	8
-edge	51		6		26		14	6
-edge	52		7		8		14	1
-edge	53		7		11		12	1
-edge	54		7		14		14	1
-edge	55		7		16		12	1
-edge	56		7		21		12	1
-edge	57		7		23		12	1
-edge	58		7		26		11	9
-edge	59		8		9		13	0
-edge	60		8		13		14	0
-edge	61		8		15		12	0
-edge	62		8		17		14	1
-edge	63		8		23		14	1
-edge	64		8		26		10	9
-edge	65		8		27		14	1
-edge	66		8		29		13	1
-edge	67		9		12		14	6
-edge	68		9		13		10	2
-edge	69		9		19		12	6
-edge	70		9		22		12	6
-edge	71		10		12		11	7
-edge	72		10		13		11	8
-edge	73		10		15		12	0
-edge	74		10		19		12	6
-edge	75		10		21		10	0
-edge	76		10		23		13	1
-edge	77		10		24		11	7
-edge	78		10		25		10	9
-edge	79		11		14		10	3
-edge	80		11		17		11	3
-edge	81		11		22		12	4
-edge	82		11		23		12	3
-edge	83		11		28		11	3
-edge	84		11		29		10	3
-edge	85		12		13		10	6
-edge	86		12		14		14	8
-edge	87		12		19		11	6
-edge	88		12		20		14	7
-edge	89		12		22		11	6
-edge	90		12		24		10	7
-edge	91		12		26		10	7
-edge	92		12		28		11	7
-edge	93		13		16		14	9
-edge	94		13		18		12	9
-edge	95		13		21		12	0
-edge	96		13		22		12	6
-edge	97		13		26		12	8
-edge	98		14		16		13	1
-edge	99		14		18		10	1
-edge	100		14		20		10	4
-edge	101		14		21		14	1
-edge	102		14		23		13	1
-edge	103		14		25		14	1
-edge	104		14		27		10	4
-edge	105		14		29		14	3
-edge	106		15		19		13	0
-edge	107		15		20		12	9
-edge	108		15		22		13	6
-edge	109		16		18		12	4
-edge	110		16		25		11	1
-edge	111		16		27		13	4
-edge	112		17		23		11	3
-edge	113		17		24		10	3
-edge	114		17		26		10	3
-edge	115		17		27		10	3
-edge	116		17		29		14	3
-edge	117		18		20		10	3
-edge	118		18		23		13	1
-edge	119		18		25		14	4
-edge	120		18		27		11	3
-edge	121		18		29		12	3
-edge	122		19		21		10	6
-edge	123		19		22		14	6
-edge	124		19		23		14	8
-edge	125		19		24		10	7
-edge	126		19		26		13	7
-edge	127		20		22		11	7
-edge	128		20		25		11	4
-edge	129		20		27		12	3
-edge	130		21		22		10	6
-edge	131		21		23		11	1
-edge	132		21		25		11	9
-edge	133		21		26		13	8
-edge	134		22		26		10	7
-edge	135		23		27		11	1
-edge	136		23		29		11	3
-edge	137		25		26		10	4
-edge	138		25		27		12	4
-edge	139		26		28		11	4
-edge	140		27		28		14	3
+edge	0		0		5		5	1
+edge	1		0		6		4	3
+edge	2		0		7		3	3
+edge	3		0		8		5	8
+edge	4		0		14		4	8
+edge	5		0		16		7	1
+edge	6		0		18		5	1
+edge	7		0		19		7	3
+edge	8		0		25		3	8
+edge	9		0		31		5	1
+edge	10		0		33		6	1
+edge	11		0		45		6	3
+edge	12		0		49		7	3
+edge	13		1		5		7	1
+edge	14		1		6		7	3
+edge	15		1		8		6	8
+edge	16		1		11		5	8
+edge	17		1		15		4	3
+edge	18		1		19		6	3
+edge	19		1		31		7	8
+edge	20		1		32		4	8
+edge	21		1		34		3	1
+edge	22		1		38		5	3
+edge	23		1		39		3	8
+edge	24		1		40		7	3
+edge	25		1		47		5	3
+edge	26		2		3		7	8
+edge	27		2		7		5	8
+edge	28		2		8		5	5
+edge	29		2		10		6	8
+edge	30		2		12		4	8
+edge	31		2		14		5	8
+edge	32		2		16		7	8
+edge	33		2		18		7	8
+edge	34		2		19		3	1
+edge	35		2		22		3	5
+edge	36		2		29		6	8
+edge	37		2		31		7	8
+edge	38		2		32		5	8
+edge	39		2		34		3	1
+edge	40		2		35		7	8
+edge	41		2		37		4	3
+edge	42		2		39		5	8
+edge	43		2		42		6	8
+edge	44		2		44		6	8
+edge	45		3		4		3	3
+edge	46		3		5		6	3
+edge	47		3		11		3	3
+edge	48		3		13		5	0
+edge	49		3		15		6	3
+edge	50		3		20		4	3
+edge	51		3		23		5	0
+edge	52		3		28		7	0
+edge	53		3		30		3	0
+edge	54		3		32		7	3
+edge	55		3		35		3	3
+edge	56		3		47		7	3
+edge	57		4		5		3	3
+edge	58		4		6		5	3
+edge	59		4		12		4	3
+edge	60		4		15		5	3
+edge	61		4		19		5	3
+edge	62		4		21		6	0
+edge	63		4		23		6	0
+edge	64		4		28		6	0
+edge	65		4		37		6	0
+edge	66		4		47		7	3
+edge	67		4		48		6	3
+edge	68		5		11		5	1
+edge	69		5		13		4	3
+edge	70		5		19		7	1
+edge	71		5		25		5	8
+edge	72		5		28		6	3
+edge	73		5		30		5	3
+edge	74		5		32		3	8
+edge	75		5		33		6	1
+edge	76		5		34		4	1
+edge	77		5		38		5	3
+edge	78		6		10		7	8
+edge	79		6		11		5	3
+edge	80		6		14		5	9
+edge	81		6		15		6	4
+edge	82		6		16		7	8
+edge	83		6		20		5	4
+edge	84		6		22		5	4
+edge	85		6		23		4	0
+edge	86		6		24		7	4
+edge	87		6		27		5	9
+edge	88		6		29		5	9
+edge	89		6		30		7	7
+edge	90		6		32		4	4
+edge	91		6		37		3	4
+edge	92		6		38		4	4
+edge	93		6		41		5	8
+edge	94		6		43		5	4
+edge	95		6		49		5	4
+edge	96		7		9		5	8
+edge	97		7		12		3	3
+edge	98		7		15		6	3
+edge	99		7		18		4	8
+edge	100		7		20		5	3
+edge	101		7		29		4	8
+edge	102		7		32		6	8
+edge	103		7		35		7	3
+edge	104		7		37		5	3
+edge	105		7		43		5	3
+edge	106		7		47		4	3
+edge	107		8		9		5	6
+edge	108		8		10		4	5
+edge	109		8		11		3	8
+edge	110		8		18		7	5
+edge	111		8		25		6	5
+edge	112		8		35		7	8
+edge	113		8		39		3	8
+edge	114		8		40		3	8
+edge	115		8		41		7	6
+edge	116		9		10		5	5
+edge	117		9		11		7	8
+edge	118		9		15		5	8
+edge	119		9		16		7	6
+edge	120		9		17		5	8
+edge	121		9		19		3	1
+edge	122		9		25		6	5
+edge	123		9		30		6	8
+edge	124		9		32		4	5
+edge	125		9		33		3	1
+edge	126		9		34		4	1
+edge	127		9		36		6	3
+edge	128		9		38		5	8
+edge	129		9		41		5	6
+edge	130		9		49		3	8
+edge	131		10		11		4	8
+edge	132		10		14		4	8
+edge	133		10		15		7	8
+edge	134		10		17		6	3
+edge	135		10		20		3	8
+edge	136		10		25		6	5
+edge	137		10		31		5	8
+edge	138		10		34		3	1
+edge	139		10		43		7	8
+edge	140		11		16		3	8
+edge	141		11		18		7	8
+edge	142		11		19		5	3
+edge	143		11		21		7	3
+edge	144		11		24		7	8
+edge	145		11		31		5	8
+edge	146		11		33		7	1
+edge	147		11		35		3	3
+edge	148		11		40		7	3
+edge	149		11		44		5	4
+edge	150		12		15		3	4
+edge	151		12		17		5	0
+edge	152		12		18		6	3
+edge	153		12		21		7	0
+edge	154		12		22		3	4
+edge	155		12		23		3	0
+edge	156		12		24		3	4
+edge	157		12		28		4	0
+edge	158		12		29		3	4
+edge	159		12		30		3	7
+edge	160		12		32		7	4
+edge	161		12		34		5	8
+edge	162		12		35		3	3
+edge	163		12		36		3	0
+edge	164		12		39		4	4
+edge	165		12		41		6	8
+edge	166		12		42		6	4
+edge	167		12		45		6	3
+edge	168		12		46		7	4
+edge	169		12		48		5	3
+edge	170		12		49		6	4
+edge	171		13		19		7	3
+edge	172		13		23		5	0
+edge	173		13		26		6	4
+edge	174		13		30		6	0
+edge	175		13		36		3	0
+edge	176		13		40		6	0
+edge	177		13		43		4	3
+edge	178		13		48		6	3
+edge	179		14		15		3	4
+edge	180		14		21		5	4
+edge	181		14		24		6	9
+edge	182		14		25		7	5
+edge	183		14		27		4	5
+edge	184		14		28		6	4
+edge	185		14		29		4	9
+edge	186		14		30		4	4
+edge	187		14		43		7	4
+edge	188		14		44		4	9
+edge	189		14		48		4	8
+edge	190		15		18		7	8
+edge	191		15		20		7	3
+edge	192		15		26		3	4
+edge	193		15		30		4	7
+edge	194		15		34		6	8
+edge	195		15		38		7	4
+edge	196		15		40		6	0
+edge	197		15		42		6	4
+edge	198		15		44		3	4
+edge	199		15		45		6	3
+edge	200		15		46		4	4
+edge	201		15		49		6	4
+edge	202		16		18		4	1
+edge	203		16		22		6	5
+edge	204		16		24		6	8
+edge	205		16		32		4	8
+edge	206		16		34		6	1
+edge	207		16		44		7	8
+edge	208		17		21		5	7
+edge	209		17		22		6	4
+edge	210		17		23		3	0
+edge	211		17		27		5	4
+edge	212		17		35		4	0
+edge	213		17		37		6	0
+edge	214		17		40		3	0
+edge	215		17		43		6	4
+edge	216		17		46		5	4
+edge	217		17		48		6	3
+edge	218		17		49		4	0
+edge	219		18		22		6	8
+edge	220		18		24		3	8
+edge	221		18		31		7	8
+edge	222		18		37		4	3
+edge	223		18		39		4	8
+edge	224		18		43		7	8
+edge	225		19		21		3	0
+edge	226		19		26		3	3
+edge	227		19		28		4	0
+edge	228		19		33		5	1
+edge	229		19		36		5	0
+edge	230		19		37		5	3
+edge	231		19		45		6	3
+edge	232		19		47		5	3
+edge	233		20		24		4	4
+edge	234		20		35		5	3
+edge	235		20		40		7	3
+edge	236		20		45		3	3
+edge	237		21		23		5	0
+edge	238		21		28		5	7
+edge	239		21		30		4	7
+edge	240		21		38		7	7
+edge	241		22		25		3	5
+edge	242		22		27		4	5
+edge	243		22		29		7	5
+edge	244		22		32		4	8
+edge	245		22		35		6	8
+edge	246		22		43		4	8
+edge	247		23		25		5	3
+edge	248		23		27		5	4
+edge	249		23		28		3	0
+edge	250		23		30		5	0
+edge	251		23		31		6	3
+edge	252		23		32		7	3
+edge	253		23		40		3	0
+edge	254		23		41		5	8
+edge	255		23		46		5	4
+edge	256		24		25		3	5
+edge	257		24		27		3	5
+edge	258		24		29		5	9
+edge	259		24		33		6	8
+edge	260		24		35		7	4
+edge	261		24		38		5	4
+edge	262		24		39		5	8
+edge	263		24		41		5	5
+edge	264		24		43		6	8
+edge	265		24		46		6	9
+edge	266		24		48		6	8
+edge	267		25		26		5	8
+edge	268		25		31		3	8
+edge	269		25		33		7	1
+edge	270		25		36		3	4
+edge	271		25		39		5	8
+edge	272		25		40		7	4
+edge	273		25		41		3	5
+edge	274		25		44		5	8
+edge	275		25		46		7	8
+edge	276		25		48		4	8
+edge	277		26		27		5	9
+edge	278		26		29		7	9
+edge	279		26		44		5	9
+edge	280		26		46		4	9
+edge	281		27		29		5	5
+edge	282		27		32		6	5
+edge	283		27		38		3	4
+edge	284		27		39		3	8
+edge	285		27		43		6	8
+edge	286		27		46		6	9
+edge	287		28		30		5	7
+edge	288		28		35		7	0
+edge	289		28		37		3	0
+edge	290		28		38		5	7
+edge	291		29		31		6	8
+edge	292		29		33		7	8
+edge	293		29		34		4	8
+edge	294		29		42		3	9
+edge	295		29		44		5	9
+edge	296		30		36		3	7
+edge	297		30		37		6	0
+edge	298		30		38		4	7
+edge	299		30		40		6	7
+edge	300		30		48		6	3
+edge	301		31		33		4	1
+edge	302		31		34		6	1
+edge	303		31		35		5	8
+edge	304		31		36		5	3
+edge	305		31		41		4	6
+edge	306		31		42		4	8
+edge	307		32		38		3	4
+edge	308		32		39		4	8
+edge	309		32		44		6	9
+edge	310		32		45		6	3
+edge	311		32		48		7	8
+edge	312		32		49		4	4
+edge	313		33		39		5	8
+edge	314		34		41		6	6
+edge	315		35		38		4	4
+edge	316		35		39		4	3
+edge	317		35		42		6	4
+edge	318		35		47		4	3
+edge	319		35		49		6	3
+edge	320		36		37		5	0
+edge	321		36		40		5	0
+edge	322		37		38		5	0
+edge	323		37		40		5	0
+edge	324		37		43		3	3
+edge	325		37		49		4	0
+edge	326		38		39		6	4
+edge	327		38		40		7	7
+edge	328		38		42		6	4
+edge	329		38		43		4	4
+edge	330		38		48		7	4
+edge	331		38		49		6	4
+edge	332		39		41		3	8
+edge	333		39		42		5	4
+edge	334		39		44		3	9
+edge	335		39		46		7	9
+edge	336		39		47		3	3
+edge	337		39		49		4	4
+edge	338		40		45		3	0
+edge	339		40		48		6	3
+edge	340		40		49		4	0
+edge	341		42		44		5	9
+edge	342		42		48		5	4
+edge	343		42		49		7	4
+edge	344		43		47		7	3
+edge	345		43		48		6	3
+edge	346		44		46		4	9
+edge	347		48		49		5	3
 

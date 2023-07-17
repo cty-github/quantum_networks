@@ -385,7 +385,6 @@ vector<RouteProject *> NetManager::heuristic_routing_projects(RsrcManager *tmp_r
                     }
                 }
                 if (rsrc_num) {
-                    obj_value += calculate_obj(serve_request, path);
                     auto* route_proj = new RouteProject(current_route_id,
                                                         rsrc_num, path, serve_request);
                     current_route_id++;
@@ -397,13 +396,14 @@ vector<RouteProject *> NetManager::heuristic_routing_projects(RsrcManager *tmp_r
                                                              link_proj->get_total_rsrc_num(),
                                                              route_proj->get_route_id());
                     }
+                    obj_value += calculate_obj(serve_request, route_proj);
                     break;
                 }
             }
-            if (max_obj_value < obj_value) {
-                max_obj_value = obj_value;
-                new_route_projects = current_route_projects;
-            }
+        }
+        if (max_obj_value < obj_value) {
+            max_obj_value = obj_value;
+            new_route_projects = current_route_projects;
         }
     }
     for (auto it_rp: new_route_projects) {
@@ -469,6 +469,7 @@ void NetManager::schedule_new_routings() {
     }
     for (auto new_route_proj:new_route_projects) {
         reserve_resource(new_route_proj);
+        new_route_proj->set_start_time();
         UserRequest* request = new_route_proj->get_request();
         int request_id = request->get_request_id();
         if (waiting_requests.find(request_id) == waiting_requests.end()) {
@@ -516,6 +517,7 @@ int NetManager::static_schedule_new_routings() {
     }
     for (auto new_route_proj:new_route_projects) {
         reserve_resource(new_route_proj);
+        new_route_proj->set_start_time();
         UserRequest* request = new_route_proj->get_request();
         int request_id = request->get_request_id();
         if (waiting_requests.find(request_id) == waiting_requests.end()) {
@@ -640,6 +642,22 @@ int NetManager::check_success_routing(const string& runtime_filepath) {
     return (int)new_req_cxn.size();
 }
 
+int NetManager::check_killed_routing(const string& runtime_filepath) {
+    vector<int> failed_request = route_manager->check_killed_routing(net_rsrc);
+    for (auto request_id:failed_request) {
+        UserRequest* request = user_requests[request_id];
+        if (processing_requests.find(request_id) == processing_requests.end()) {
+            throw logic_error("Request " + to_string(request_id) + " is not processing");
+        }
+        processing_requests.erase(request_id);
+        if (waiting_requests.find(request_id) != waiting_requests.end()) {
+            throw logic_error("Request " + to_string(request_id) + " is waiting");
+        }
+        waiting_requests[request_id] = request;
+    }
+    return (int)failed_request.size();
+}
+
 int NetManager::finish_user_connection(int time) {
     //  - Finish Connections
     vector<int> finished_request;
@@ -675,13 +693,8 @@ int NetManager::finish_user_connection(int time) {
     return (int)finished_request.size();
 }
 
-double NetManager::calculate_obj(UserRequest* request, Path* path) {
-    vector<QEdge*> edges = path->get_edges();
+double NetManager::calculate_obj(UserRequest* request, RouteProject* route) {
     int wait_time = get_time_interval(get_current_time(), request->get_request_time());
-    double p = 1;
-    for (auto edge : edges) {
-        p *= edge->get_success_rate() * edge->get_channel_capacity();
-    }
-    double e_slot = 1 / (pow(NUM_TRIES, edges.size() - 1) * p);
+    double e_slot = route->get_expect_slots();
     return wait_time / e_slot;
 }

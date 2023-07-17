@@ -111,6 +111,17 @@ void LinkGenerator::add_req_route(int route_id, int req_num) {
     total_req_num += req_num;
 }
 
+void LinkGenerator::del_req_route(int route_id) {
+    int queue_size = (int)route_requests.size();
+    for (int i = 0; i < queue_size; i++) {
+        pair<int, int> req_pair = route_requests.front();
+        route_requests.pop();
+        if (req_pair.first != route_id) {
+            route_requests.push(req_pair);
+        }
+    }
+}
+
 map<int, vector<EntangleLink*>> LinkGenerator::serve_requests(vector<EntangleLink*> new_links) {
     map<int, vector<EntangleLink*>> serve_route_links;
     while (!new_links.empty() && !route_requests.empty()) {
