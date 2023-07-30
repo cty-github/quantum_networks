@@ -21,13 +21,13 @@
 // device parameters
 #define PTN_DECAY_RATE 0.0010
 #define PTN_FIDE 0.99
-#define BSM_SUCCESS_RATE 1.0
+#define BSM_SUCCESS_RATE 0.99
 #define BSM_Z_FIDE 0.999
 #define BSM_X_FIDE 0.999
 
 // working parameters
 #define CANDIDATE_NUM 5
-#define RUN_TIME 60
+#define RUN_TIME 20
 #define IPS 10000
 #define SAMPLE_INT 1000
 

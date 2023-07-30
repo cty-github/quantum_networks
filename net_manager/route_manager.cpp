@@ -194,7 +194,10 @@ void RouteManager::refresh_routing_state(int time, HsRsrcManager* net_rsrc) {
         switch (RSRC_MANAGE) {
             case 0: {
                 route_proj->purify_available_links();
-                route_proj->swap_all_connected();
+                map<int, int> link_gen_recover = route_proj->swap_all_connected();
+                for (auto it:link_gen_recover) {
+                    link_generators[it.first]->add_req_route(route_proj->get_route_id(), it.second);
+                }
                 break;
             }
             case 1: {
@@ -209,9 +212,7 @@ void RouteManager::refresh_routing_state(int time, HsRsrcManager* net_rsrc) {
                 break;
             }
             default: {
-                route_proj->purify_available_links();
-                route_proj->swap_all_connected();
-                break;
+                throw logic_error("Unknown Resource Management Type");
             }
         }
         if (route_proj->check_user_connection()) {

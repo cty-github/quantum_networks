@@ -296,28 +296,30 @@ map<int, int> LinkManager::swap_all_connected(Path* path, HsRsrcManager* net_rsr
                     }
                 }
             } else {
-                // travel the prev path and next path, preempt the resource
-                vector<QEdge*> prev_edges = prev_path->get_edges();
-                vector<QNode*> prev_nodes = prev_path->get_nodes();
-                for (int j = 0; j < prev_edges.size(); j++) {
-                    int edge_id = prev_edges[j]->get_edge_id();
-                    net_rsrc->preempt_edge_capacity(edge_id, link_projects[edge_id]->get_edge_rsrc().first, route_id);
-                    if (j == 0) {
-                        net_rsrc->preempt_node_memory(prev_nodes[i]->get_id(),
-                                                      link_projects[edge_id]->get_src_rsrc().first - 1, route_id);
+                // travel the new path
+                vector<QEdge*> new_edges = new_path->get_edges();
+                vector<QNode*> new_nodes = new_path->get_nodes();
+                for (int j = 0; j < new_edges.size(); j++) {
+                    int edge_id = new_edges[j]->get_edge_id();
+                    // preempt the resource
+                    if (RSRC_MANAGE == 1) {
+                        net_rsrc->preempt_edge_capacity(edge_id, link_projects[edge_id]->get_edge_rsrc().first, route_id);
+                        if (j == 0) {
+                            net_rsrc->preempt_node_memory(new_nodes[i]->get_id(),
+                                                          link_projects[edge_id]->get_src_rsrc().first - 1, route_id);
+                        }
+                        if (j == new_edges.size()-1) {
+                            net_rsrc->preempt_node_memory(new_nodes[i+1]->get_id(),
+                                                          link_projects[edge_id]->get_dst_rsrc().first - 1, route_id);
+                        } else {
+                            net_rsrc->preempt_node_memory(new_nodes[i+1]->get_id(),
+                                                          link_projects[edge_id]->get_dst_rsrc().first, route_id);
+                        }
                     }
-                    if (j == prev_edges.size()-1) {
-                        net_rsrc->preempt_node_memory(prev_nodes[i+1]->get_id(),
-                                                      link_projects[edge_id]->get_dst_rsrc().first - 1, route_id);
-                    } else {
-                        net_rsrc->preempt_node_memory(prev_nodes[i+1]->get_id(),
-                                                      link_projects[edge_id]->get_dst_rsrc().first, route_id);
-                    }
-                    link_generator_recover[edge_id] += link_projects[edge_id]->get_edge_rsrc().first;
+                    // reclaim the link requirement to link project
+                    link_generator_recover[edge_id] += link_projects[edge_id]->get_req_num();
                 }
-                // reclaim the link requirement to link project
-                throw logic_error("Swap Fail Not Implement Yet");
-//                cout << "Swap Fail" << endl;
+//                throw logic_error("Swap Fail Not Implement Yet");
             }
         }
     }
